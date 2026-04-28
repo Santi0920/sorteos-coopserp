@@ -12,6 +12,8 @@ use App\Http\Controllers\Admin\GanadorController;
 use App\Http\Controllers\Public\ResultadoController;
 use App\Http\Controllers\Admin\PdfBoletaController;
 use App\Http\Controllers\Admin\LineaCreditoController;
+use App\Http\Controllers\Admin\ImportController;
+use App\Http\Controllers\Admin\AsociadoController;
 use App\Http\Controllers\Public\InformeBoletasController;
 
 
@@ -23,9 +25,34 @@ Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/', [App\Http\Controllers\Admin\DashboardController::class, 'index'])
     ->name('dashboard');
+    Route::get('/debug-email/{credito}/{sorteo}', function ($creditoId, $sorteoId) {
+        $credito = \App\Models\Credito::with('asociado')->findOrFail($creditoId);
+        $sorteo  = \App\Models\Sorteo::findOrFail($sorteoId);
+        $boletas = \App\Models\Boleta::where('credito_id', $creditoId)
+                    ->where('sorteo_id', $sorteoId)
+                    ->get();
+
+        return new \App\Mail\BoletasPorCreditoMail($credito, $sorteo, $boletas);
+    });
+    Route::get('importar', [ImportController::class, 'form'])
+        ->name('import.form');
+
+    Route::post('importar', [ImportController::class, 'import'])
+        ->name('import.store');
+
+    Route::get('importar/plantilla', [ImportController::class, 'template'])
+    ->name('import.template');
+    
+    Route::get('importar/plantilla-excel', [ImportController::class, 'templateExcel'])
+    ->name('import.template.excel');
     Route::resource('sorteos', SorteoController::class);
     Route::resource('premios', PremioController::class);
 
+    Route::get('asociados', [AsociadoController::class, 'index'])
+    ->name('asociados.index');
+
+    Route::get('asociados/{id}/creditos', [AsociadoController::class, 'creditos'])
+        ->name('asociados.creditos');
     Route::get('boletas', [BoletaController::class, 'index'])->name('boletas.index');
     Route::post('boletas/generar', [BoletaController::class, 'generate'])->name('boletas.generate');
     Route::delete('boletas/sorteo/{sorteo}', [BoletaController::class, 'destroyBySorteo'])->name('boletas.destroyBySorteo');

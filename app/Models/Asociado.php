@@ -19,7 +19,10 @@ class Asociado extends Model
         'telefono',
         'whatsapp',
         'token_consulta',
-        'activo',
+        'activo', 
+        'cuenta', 
+        'agencia', 
+        'nomina', 
     ];
 
     protected $casts = [

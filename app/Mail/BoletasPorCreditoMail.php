@@ -26,7 +26,15 @@ class BoletasPorCreditoMail extends Mailable
 
     public function build()
     {
+        $premios = \App\Models\Premio::where('sorteo_id', $this->sorteo->id)
+            ->where('activo', true)
+            ->orderBy('orden')
+            ->get();
+
         return $this->subject('COOPSERP - BOLETAS SORTEO MOTOS: ' . $this->sorteo->nombre)
-            ->view('emails.boletas-por-credito');
+            ->view('emails.boletas-por-credito')
+            ->with([
+                'premios' => $premios,
+            ]);
     }
 }

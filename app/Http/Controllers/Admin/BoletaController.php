@@ -75,7 +75,7 @@ class BoletaController extends Controller
 
         try {
             $result = $service->generateForSorteo($sorteo);
-
+            
             $message = $result['message'];
 
             if (isset($result['generated'])) {

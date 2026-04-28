@@ -302,6 +302,19 @@
                         <i class="bi bi-speedometer2"></i>
                         <span>Dashboard</span>
                     </a>
+                    
+                    <a href="{{ route('admin.asociados.index') }}"
+                    class="nav-link {{ request()->routeIs('admin.asociados.*') ? 'active' : '' }}">
+                        <i class="bi bi-people"></i>
+                        <span>Asociados</span>
+                    </a>
+
+                    <a href="{{ route('admin.import.form') }}"
+                    class="nav-link {{ request()->routeIs('admin.import.*') ? 'active' : '' }}">
+                        <i class="bi bi-file-earmark-arrow-up"></i>
+                        <span>Importar CSV</span>
+                    </a>
+
                     <a href="{{ route('admin.sorteos.index') }}"
                     class="nav-link {{ request()->routeIs('admin.sorteos.*') ? 'active' : '' }}">
                         <i class="bi bi-calendar2-event"></i>
