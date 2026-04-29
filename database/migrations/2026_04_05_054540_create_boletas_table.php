@@ -13,7 +13,7 @@ return new class extends Migration
 
             $table->foreignId('asociado_id')->constrained('asociados')->cascadeOnDelete();
             $table->foreignId('credito_id')->nullable()->constrained('creditos')->nullOnDelete();
-            $table->foreignId('sorteo_id')->constrained('sorteos')->cascadeOnDelete();
+            $table->foreignId('sorteo_id')->nullable()->constrained('sorteos')->cascadeOnDelete();
 
             $table->string('numero_boleta', 4); // 0000 a 9999
             $table->decimal('monto_base', 15, 2)->default(0); // monto usado para asignación

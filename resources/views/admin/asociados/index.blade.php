@@ -1,7 +1,10 @@
 @extends('layouts.admin')
 
 @section('content')
-
+@php
+    $title = 'Visualización de Asociados';
+    $subtitle = 'Administra y revisa los asociados registrados en el sistema, así como sus créditos relacionados.';
+@endphp
 <div class="container py-4">
 
     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -18,6 +21,7 @@
                             <th>#</th>
                             <th>Cedula</th>
                             <th>Nombre</th>
+                            <th>Email</th>
                             <th>Agencia</th>
                             <th>Cuenta</th>
                             <th>Nomina</th>
@@ -34,6 +38,8 @@
                                 <td>{{ $asociado->documento }}</td>
 
                                 <td>{{ $asociado->nombre_completo }}</td>
+
+                                <td>{{ $asociado->email }}</td>
 
                                 <td>{{ $asociado->agencia ?? '-' }}</td>
 

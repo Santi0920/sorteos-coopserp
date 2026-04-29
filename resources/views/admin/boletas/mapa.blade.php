@@ -2,7 +2,7 @@
 
 @php
     $title = 'Mapa de Boletas';
-    $subtitle = 'Visualización completa del estado de boletas del sorteo.';
+    $subtitle = 'Visualización completa del estado de todas las boletas.';
 @endphp
 
 @section('content')
@@ -19,12 +19,11 @@
 <div class="content-card card mb-4">
     <div class="card-body d-flex justify-content-between align-items-center flex-wrap gap-2">
         <div>
-            <h5 class="fw-bold mb-1">{{ $sorteo->nombre }}</h5>
+            <h5 class="fw-bold mb-1">Mapa global de boletas</h5>
             <small class="text-muted">
-                Total boletas: {{ count($boletas) }}
+                Total boletas asignadas: {{ count($boletas) }}
             </small>
         </div>
-
         <a href="{{ route('admin.boletas.index') }}" class="btn btn-light">
             <i class="bi bi-arrow-left"></i> Volver
         </a>
@@ -41,7 +40,7 @@
             <span class="badge bg-warning-subtle text-warning">Ganadora</span>
         </div>
 
-        <!-- CONTENEDOR CON SCROLL -->
+        <!-- GRID -->
         <div class="boletas-scroll">
             <div class="boletas-grid" id="gridBoletas">
                 @for($i = 0; $i <= 9999; $i++)
@@ -59,7 +58,7 @@
                             : 'Disponible';
                     @endphp
 
-                    <div 
+                    <div
                         class="boleta-item {{ $estado }} hidden"
                         data-bs-toggle="tooltip"
                         data-bs-html="true"
@@ -75,7 +74,6 @@
 </div>
 
 <style>
-/* LOADER */
 .loader-overlay {
     position: fixed;
     inset: 0;
@@ -93,31 +91,24 @@
     border-radius: 20px;
 }
 
-/* SCROLL PRO */
 .boletas-scroll {
     max-height: 65vh;
     overflow-y: auto;
     padding-right: 6px;
 }
 
-/* SCROLL BONITO */
-.boletas-scroll::-webkit-scrollbar {
-    width: 8px;
-}
-
+.boletas-scroll::-webkit-scrollbar { width: 8px; }
 .boletas-scroll::-webkit-scrollbar-thumb {
     background: #2563eb;
     border-radius: 10px;
 }
 
-/* GRID */
 .boletas-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(65px, 1fr));
     gap: 8px;
 }
 
-/* ITEMS */
 .boleta-item {
     padding: 10px;
     text-align: center;
@@ -131,28 +122,16 @@
     transform: translateY(10px);
 }
 
-/* animación entrada */
 .boleta-item.show {
     opacity: 1;
     transform: translateY(0);
 }
 
-.boleta-item:hover {
-    transform: scale(1.08);
-}
+.boleta-item:hover { transform: scale(1.08); }
 
-/* estados */
-.boleta-item.disponible {
-    background: #ecfdf5;
-    color: #065f46;
-}
-
-.boleta-item.ocupada {
-    background: #fee2e2;
-    color: #991b1b;
-}
-
-.boleta-item.ganadora {
+.boleta-item.disponible { background: #ecfdf5; color: #065f46; }
+.boleta-item.ocupada    { background: #fee2e2; color: #991b1b; }
+.boleta-item.ganadora   {
     background: #fef3c7;
     color: #92400e;
     box-shadow: 0 0 10px rgba(234,179,8,.5);
@@ -164,11 +143,9 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-
-    const items = document.querySelectorAll('.boleta-item');
+    const items  = document.querySelectorAll('.boleta-item');
     const loader = document.getElementById('loaderBoletas');
 
-    // Render progresivo
     let index = 0;
     const batchSize = 200;
 
@@ -180,14 +157,10 @@ document.addEventListener('DOMContentLoaded', function () {
         if (index < items.length) {
             requestAnimationFrame(renderBatch);
         } else {
-            // quitar loader
             setTimeout(() => {
                 loader.style.display = 'none';
-
-                // activar tooltips después
-                const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]')
-                tooltipTriggerList.forEach(el => new bootstrap.Tooltip(el))
-
+                document.querySelectorAll('[data-bs-toggle="tooltip"]')
+                    .forEach(el => new bootstrap.Tooltip(el));
             }, 300);
         }
     }

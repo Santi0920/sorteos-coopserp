@@ -26,8 +26,8 @@ class GanadorController extends Controller
                 'premios.boletaGanadora.asociado',
             ])->findOrFail($sorteoId);
 
+            // Todas las boletas globales, sin filtrar por sorteo
             $boletas = Boleta::with(['asociado'])
-                ->where('sorteo_id', $sorteoSeleccionado->id)
                 ->orderBy('numero_boleta')
                 ->get();
 
@@ -51,27 +51,19 @@ class GanadorController extends Controller
             'boleta_id' => ['nullable', 'exists:boletas,id'],
         ]);
 
-        $premio = Premio::with('sorteo')->findOrFail($validated['premio_id']);
+        $premio   = Premio::with('sorteo')->findOrFail($validated['premio_id']);
         $boletaId = $validated['boleta_id'] ?? null;
 
         if ($boletaId) {
-            $boleta = Boleta::findOrFail($boletaId);
-
-            if ((int) $boleta->sorteo_id !== (int) $premio->sorteo_id) {
-                return redirect()
-                    ->route('admin.ganadores.index', ['sorteo_id' => $premio->sorteo_id])
-                    ->with('error', 'La boleta seleccionada no pertenece al mismo sorteo del premio.');
-            }
-
-            $premioUsado = Premio::where('sorteo_id', $premio->sorteo_id)
-                ->where('boleta_ganadora_id', $boletaId)
+            // Verificar que la boleta no esté asignada a otro premio
+            $premioUsado = Premio::where('boleta_ganadora_id', $boletaId)
                 ->where('id', '!=', $premio->id)
                 ->first();
 
             if ($premioUsado) {
                 return redirect()
                     ->route('admin.ganadores.index', ['sorteo_id' => $premio->sorteo_id])
-                    ->with('error', 'Esa boleta ya está asignada a otro premio de este sorteo.');
+                    ->with('error', 'Esa boleta ya está asignada a otro premio.');
             }
         }
 
@@ -130,12 +122,19 @@ class GanadorController extends Controller
 
     protected function syncBoletasGanadoras(int $sorteoId): void
     {
-        // limpiamos todas
-        Boleta::where('sorteo_id', $sorteoId)->update([
-            'ganadora' => false,
-        ]);
+        // Limpiar ganadoras previas de premios de este sorteo
+        $boletasAnteriores = Premio::where('sorteo_id', $sorteoId)
+            ->pluck('boleta_ganadora_id')
+            ->filter()
+            ->toArray();
 
-        // marcamos solo las que estén asociadas a premios
+        if (!empty($boletasAnteriores)) {
+            Boleta::whereIn('id', $boletasAnteriores)->update([
+                'ganadora' => false,
+            ]);
+        }
+
+        // Marcar las nuevas ganadoras
         $boletasGanadorasIds = Premio::where('sorteo_id', $sorteoId)
             ->where('activo', true)
             ->whereNotNull('boleta_ganadora_id')

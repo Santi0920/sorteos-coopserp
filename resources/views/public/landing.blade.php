@@ -451,6 +451,12 @@
         <div class="container py-3">
             <a href="#" class="navbar-brand d-flex align-items-center gap-3 m-0 text-decoration-none">
                 <img 
+                    src="https://uiaf.gov.co/sites/default/files/styles/large/public/inline-images/coljuegos-logo_0.png"
+                    alt="Coljuegos"
+                    class="landing-logo"
+                    style="background: rgba(255,255,255,0.95); padding: 5px 10px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.2);"
+                >
+                <img 
                     src="https://www.coopserp.com/wp/wp-content/uploads/2024/04/Logo-grande-Coopserp-2019-e1721607356635.png"
                     alt="Coopserp"
                     class="landing-logo"
@@ -705,7 +711,7 @@
 
     <footer class="footer-public py-4 mt-4">
         <div class="container d-flex flex-column flex-md-row justify-content-between align-items-center gap-2">
-            <div>Sistema de sorteos COOPSERP · Plataforma pública</div>
+            <div>Sistema de sorteos COOPSERP · Plataforma pública · <span class="fw-bold">AUTORIZA COLJUEGOS</span></div>
             <div>
                 <a href="{{ route('consulta.boletas.form') }}" class="text-decoration-none text-light">
                     Consultar boletas

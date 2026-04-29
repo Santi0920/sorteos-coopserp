@@ -25,26 +25,9 @@ class Sorteo extends Model
         'fecha_sorteo' => 'date',
         'es_reprogramado' => 'boolean',
     ];
-    
-    
+
     public function premios()
     {
         return $this->hasMany(Premio::class)->orderBy('orden');
     }
-
-    public function lineasCredito()
-    {
-        return $this->belongsToMany(
-            LineaCredito::class,
-            'linea_credito_sorteo',
-            'sorteo_id',
-            'linea_credito_id'
-        );
-    }
-    public function boletas()
-    {
-        return $this->hasMany(Boleta::class);
-    }
-
-    
 }

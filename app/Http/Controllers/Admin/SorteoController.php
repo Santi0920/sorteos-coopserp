@@ -27,32 +27,21 @@ class SorteoController extends Controller
 
     public function create()
     {
-        $lineas = \App\Models\LineaCredito::where('activo', true)
-            ->where('participa_sorteo', true)
-            ->orderBy('codigo')
-            ->get();
-
-        return view('admin.sorteos.create', compact('lineas'));
+        return view('admin.sorteos.create');
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'nombre' => ['required', 'string', 'max:255'],
-            'fecha_sorteo' => ['required', 'date'],
-            'loteria' => ['nullable', 'string', 'max:255'],
-            'estado' => ['required', 'in:programado,ejecutado,cancelado'],
+            'nombre'          => ['required', 'string', 'max:255'],
+            'fecha_sorteo'    => ['required', 'date'],
+            'loteria'         => ['nullable', 'string', 'max:255'],
+            'estado'          => ['required', 'in:programado,ejecutado,cancelado'],
             'es_reprogramado' => ['required', 'boolean'],
-            'observaciones' => ['nullable', 'string'],
-            'lineas_credito' => ['nullable', 'array'],
-            'lineas_credito.*' => ['exists:lineas_credito,id'],
+            'observaciones'   => ['nullable', 'string'],
         ]);
 
-        $lineas = $validated['lineas_credito'] ?? [];
-        unset($validated['lineas_credito']);
-
-        $sorteo = Sorteo::create($validated);
-        $sorteo->lineasCredito()->sync($lineas);
+        Sorteo::create($validated);
 
         return redirect()
             ->route('admin.sorteos.index')
@@ -66,39 +55,27 @@ class SorteoController extends Controller
 
     public function edit(Sorteo $sorteo)
     {
-        $lineas = \App\Models\LineaCredito::where('activo', true)
-            ->where('participa_sorteo', true)
-            ->orderBy('codigo')
-            ->get();
-
-        $sorteo->load('lineasCredito');
-
-        return view('admin.sorteos.edit', compact('sorteo', 'lineas'));
+        return view('admin.sorteos.edit', compact('sorteo'));
     }
 
     public function update(Request $request, Sorteo $sorteo)
     {
         $validated = $request->validate([
-            'nombre' => ['required', 'string', 'max:255'],
-            'fecha_sorteo' => ['required', 'date'],
-            'loteria' => ['nullable', 'string', 'max:255'],
-            'estado' => ['required', 'in:programado,ejecutado,cancelado'],
+            'nombre'          => ['required', 'string', 'max:255'],
+            'fecha_sorteo'    => ['required', 'date'],
+            'loteria'         => ['nullable', 'string', 'max:255'],
+            'estado'          => ['required', 'in:programado,ejecutado,cancelado'],
             'es_reprogramado' => ['required', 'boolean'],
-            'observaciones' => ['nullable', 'string'],
-            'lineas_credito' => ['nullable', 'array'],
-            'lineas_credito.*' => ['exists:lineas_credito,id'],
+            'observaciones'   => ['nullable', 'string'],
         ]);
 
-        $lineas = $validated['lineas_credito'] ?? [];
-        unset($validated['lineas_credito']);
-
         $sorteo->update($validated);
-        $sorteo->lineasCredito()->sync($lineas);
 
         return redirect()
             ->route('admin.sorteos.index')
             ->with('success', 'Sorteo actualizado correctamente.');
     }
+
     public function destroy(Sorteo $sorteo)
     {
         $sorteo->delete();

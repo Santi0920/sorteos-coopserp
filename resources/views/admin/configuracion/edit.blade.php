@@ -27,28 +27,21 @@
                         <div class="row g-4">
                             <div class="col-md-6">
                                 <label class="form-label">Monto por boleta</label>
-                                <input
-                                    type="number"
-                                    step="0.01"
-                                    min="1"
-                                    name="monto_por_boleta"
-                                    class="form-control"
+                                <input 
+                                    type="text" 
+                                    id="monto_display"
+                                    class="form-control" 
+                                    placeholder="$ 0"
+                                    inputmode="numeric"
+                                >
+                                <input 
+                                    type="hidden" 
+                                    name="monto_por_boleta" 
+                                    id="monto_real"
                                     value="{{ old('monto_por_boleta', $config['monto_por_boleta'] ?? '') }}"
-                                    required
                                 >
                             </div>
 
-                            <div class="col-md-6">
-                                <label class="form-label">Máximo líneas participantes</label>
-                                <input
-                                    type="number"
-                                    min="1"
-                                    name="max_lineas_participantes"
-                                    class="form-control"
-                                    value="{{ old('max_lineas_participantes', $config['max_lineas_participantes'] ?? '') }}"
-                                    required disabled
-                                >
-                            </div>
 
                             <div class="col-md-4">
                                 <label class="form-label">Longitud número boleta</label>
@@ -137,4 +130,37 @@
             </div>
         </div>
     </form>
+
+@push('scripts')
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const display = document.getElementById('monto_display');
+                const real    = document.getElementById('monto_real');
+
+                // Formatear valor inicial si existe
+                if (real.value) {
+                    let formatted = parseInt(real.value, 10).toLocaleString('es-CO');
+                    display.value = '$ ' + formatted;
+                }
+
+                display.addEventListener('input', function () {
+                    let raw = this.value.replace(/\D/g, '');
+
+                    if (!raw) {
+                        this.value = '';
+                        real.value = '';
+                        return;
+                    }
+
+                    let formatted = parseInt(raw, 10).toLocaleString('es-CO');
+                    this.value = '$ ' + formatted;
+                    real.value = raw;
+                });
+
+                display.addEventListener('paste', function () {
+                    setTimeout(() => display.dispatchEvent(new Event('input')), 0);
+                });
+            });
+        </script>
+@endpush
 @endsection

@@ -55,25 +55,7 @@
         </select>
     </div>
 
-    <div class="col-12">
-        <label class="form-label">Líneas participantes (INFORMATIVO)</label>
 
-        @php
-            $lineasSeleccionadas = old(
-                'lineas_credito',
-                isset($sorteo) ? $sorteo->lineasCredito->pluck('id')->toArray() : []
-            );
-        @endphp
-
-        <select name="lineas_credito[]" class="form-select" multiple size="6">
-            @foreach($lineas as $lineaItem)
-                <option value="{{ $lineaItem->id }}"
-                    {{ in_array($lineaItem->id, $lineasSeleccionadas) ? 'selected' : '' }}>
-                    {{ $lineaItem->codigo }} - {{ $lineaItem->nombre }}
-                </option>
-            @endforeach
-        </select>
-    </div>
 
     <div class="col-12">
         <label class="form-label">Observaciones</label>

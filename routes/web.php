@@ -71,7 +71,7 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     Route::get('pdf-boletas', [PdfBoletaController::class, 'form'])->name('pdf-boletas.form');
     Route::post('pdf-boletas', [PdfBoletaController::class, 'generate'])->name('pdf-boletas.generate');
 
-    Route::get('mapa-boletas/{sorteo}', [App\Http\Controllers\Admin\MapaBoletasController::class, 'index'])
+    Route::get('mapa-boletas', [App\Http\Controllers\Admin\MapaBoletasController::class, 'index'])
         ->name('boletas.mapa');
 });
 

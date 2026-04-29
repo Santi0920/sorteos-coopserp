@@ -21,7 +21,7 @@ class BoletaController extends Controller
             $perPage = 10;
         }
 
-        $boletas = Boleta::with(['sorteo', 'asociado', 'credito'])
+        $boletas = Boleta::with(['asociado', 'credito'])  // ← quitar 'sorteo'
             ->when($search, function ($query) use ($search) {
                 $query->where(function ($q) use ($search) {
                     $q->where('numero_boleta', 'like', "%{$search}%")
@@ -29,17 +29,13 @@ class BoletaController extends Controller
                             $sub->where('nombres', 'like', "%{$search}%")
                                 ->orWhere('apellidos', 'like', "%{$search}%")
                                 ->orWhere('documento', 'like', "%{$search}%");
-                        })
-                        ->orWhereHas('sorteo', function ($sub) use ($search) {
-                            $sub->where('nombre', 'like', "%{$search}%");
                         });
+                        // ← quitar el orWhereHas('sorteo')
                 });
             })
             ->orderByDesc('id')
             ->paginate($perPage)
             ->withQueryString();
-
-        $sorteos = Sorteo::orderBy('fecha_sorteo')->get();
 
         $topAsociado = Boleta::query()
             ->select('asociado_id', DB::raw('COUNT(*) as total_boletas'))
@@ -59,23 +55,17 @@ class BoletaController extends Controller
             'boletas',
             'search',
             'perPage',
-            'sorteos',
             'topAsociado',
             'totalMontoCreditos'
         ));
     }
 
+
     public function generate(Request $request, BoletaGeneratorService $service)
     {
-        $validated = $request->validate([
-            'sorteo_id' => ['required', 'exists:sorteos,id'],
-        ]);
-
-        $sorteo = Sorteo::with('lineasCredito')->findOrFail($validated['sorteo_id']);
-
         try {
-            $result = $service->generateForSorteo($sorteo);
-            
+            $result = $service->generateForSorteo();
+
             $message = $result['message'];
 
             if (isset($result['generated'])) {
@@ -93,6 +83,7 @@ class BoletaController extends Controller
             return redirect()
                 ->route('admin.boletas.index')
                 ->with($result['success'] ? 'success' : 'error', $message);
+
         } catch (\Throwable $e) {
             return redirect()
                 ->route('admin.boletas.index')

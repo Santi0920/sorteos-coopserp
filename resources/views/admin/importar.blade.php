@@ -1,5 +1,8 @@
 @extends('layouts.admin')
-
+@php
+    $title = 'Importar datos';
+    $subtitle = 'Carga masiva de asociados y créditos a través de un archivo CSV o Excel. Asegúrate de seguir el formato requerido para una importación exitosa.';
+@endphp
 @section('content')
 <div class="container py-4">
 
@@ -24,6 +27,7 @@
                         <th>Linea</th>
                         <th>Credito</th>
                         <th>Monto</th>
+                        <th>Email</th>
                     </tr>
                 </thead>
             </table>
@@ -37,7 +41,7 @@
         </ul>
     </div>
     <a href="{{ route('admin.import.template') }}" class="btn btn-outline-primary mb-3">
-        <i class="bi bi-download me-1"></i> Descargar plantilla
+        <i class="bi bi-download me-1"></i> Descargar plantilla CSV
     </a>
 
     <a href="{{ route('admin.import.template.excel') }}" class="btn btn-success mb-3">

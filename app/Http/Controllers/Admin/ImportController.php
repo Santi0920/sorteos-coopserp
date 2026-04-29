@@ -74,7 +74,7 @@ class ImportController extends Controller
             DB::commit();
 
             return back()->with('success',
-                "Importación completada. Errores: " . count($errores) . 
+                "Importación completada. Errores: " . count($errores) .
                 (count($errores) ? " → " . implode(' | ', $errores) : '')
             );
 
@@ -90,7 +90,10 @@ class ImportController extends Controller
     {
         try {
 
-            if (count($row) < 8) {
+            // Rellenar hasta 9 columnas por si email viene vacío
+            $row = array_pad($row, 9, null);
+
+            if (count($row) < 9) {
                 $errores[] = "Fila $filaNumero: columnas incompletas";
                 return;
             }
@@ -103,16 +106,26 @@ class ImportController extends Controller
                 $nombreCompleto,
                 $lineaCodigo,
                 $numeroCredito,
-                $monto
+                $monto,
+                $email
             ] = $row;
 
             // LIMPIEZA
-            $cedula = trim($cedula);
-            $nombreCompleto = trim($nombreCompleto);
-            $numeroCredito = trim($numeroCredito);
-            $lineaCodigo = trim($lineaCodigo);
+            $cedula        = trim($cedula ?? '');
+            $nombreCompleto = trim($nombreCompleto ?? '');
+            $numeroCredito  = trim($numeroCredito ?? '');
+            $lineaCodigo    = trim($lineaCodigo ?? '');
+            $cuenta         = trim($cuenta ?? '');
+            $agencia        = trim($agencia ?? '');
+            $nomina         = trim($nomina ?? '');
 
-            // VALIDACIONES
+            // EMAIL: validar formato, si no es válido guardar null
+            $emailLimpio = trim($email ?? '');
+            $emailFinal  = filter_var($emailLimpio, FILTER_VALIDATE_EMAIL)
+                ? $emailLimpio
+                : null;
+
+            // VALIDACIONES OBLIGATORIAS
             if (!$cedula || !$nombreCompleto || !$numeroCredito || !$monto) {
                 $errores[] = "Fila $filaNumero: datos vacíos";
                 return;
@@ -126,26 +139,27 @@ class ImportController extends Controller
                 return;
             }
 
-            // NOMBRES (MEJORADO)
-            $partes = explode(' ', $nombreCompleto);
-            $nombres = array_shift($partes);
+            // SEPARAR NOMBRES Y APELLIDOS
+            $partes    = explode(' ', $nombreCompleto);
+            $nombres   = array_shift($partes);
             $apellidos = implode(' ', $partes);
 
-            // ASOCIADO
+            // ASOCIADO: crear o actualizar por cédula
             $asociado = Asociado::updateOrCreate(
                 ['documento' => $cedula],
                 [
-                    'nombres' => $nombres,
-                    'apellidos' => $apellidos,
-                    'cuenta' => $cuenta,
-                    'agencia' => $agencia,
-                    'nomina' => $nomina,
-                    'activo' => true,
-                    'token_consulta' => Str::uuid()
+                    'nombres'        => $nombres,
+                    'apellidos'      => $apellidos,
+                    'cuenta'         => $cuenta,
+                    'agencia'        => $agencia,
+                    'nomina'         => $nomina,
+                    'email'          => $emailFinal,
+                    'activo'         => true,
+                    'token_consulta' => Str::uuid(),
                 ]
             );
 
-            // LINEA
+            // LÍNEA DE CRÉDITO
             $linea = LineaCredito::where('codigo', $lineaCodigo)->first();
 
             if (!$linea) {
@@ -153,7 +167,7 @@ class ImportController extends Controller
                 return;
             }
 
-            // DUPLICADO
+            // EVITAR CRÉDITO DUPLICADO
             if (Credito::where('numero_credito', $numeroCredito)->exists()) {
                 $errores[] = "Fila $filaNumero: crédito duplicado ($numeroCredito)";
                 return;
@@ -161,10 +175,10 @@ class ImportController extends Controller
 
             // CREAR CRÉDITO
             Credito::create([
-                'asociado_id' => $asociado->id,
+                'asociado_id'      => $asociado->id,
                 'linea_credito_id' => $linea->id,
-                'numero_credito' => $numeroCredito,
-                'monto' => $montoLimpio,
+                'numero_credito'   => $numeroCredito,
+                'monto'            => $montoLimpio,
                 'fecha_desembolso' => now(),
                 'participa_sorteo' => true,
             ]);
@@ -184,7 +198,8 @@ class ImportController extends Controller
             'Nombre',
             'Linea',
             'Credito',
-            'Monto'
+            'Monto',
+            'Email'
         ];
 
         $example = [
@@ -195,7 +210,8 @@ class ImportController extends Controller
             'Juan Perez',
             '99',
             '15489',
-            '3900000'
+            '3900000',
+            'juan@coopserp.com'
         ];
 
         $filename = "plantilla_importacion.csv";

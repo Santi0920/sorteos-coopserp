@@ -14,7 +14,6 @@ class Boleta extends Model
     protected $fillable = [
         'asociado_id',
         'credito_id',
-        'sorteo_id',
         'numero_boleta',
         'monto_base',
         'bloque_boletas',
@@ -26,10 +25,6 @@ class Boleta extends Model
         'monto_base' => 'decimal:2',
     ];
 
-    public function sorteo()
-    {
-        return $this->belongsTo(Sorteo::class);
-    }
 
     public function asociado()
     {

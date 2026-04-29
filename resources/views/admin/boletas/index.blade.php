@@ -2,21 +2,18 @@
 
 @php
     $title = 'Gestión de Boletas';
-    $subtitle = 'Genera, consulta y administra las boletas de cada sorteo.';
+    $subtitle = 'Genera, consulta y administra las boletas del sistema.';
 @endphp
 
 @section('topbar_actions')
-    <a href="{{ route('admin.boletas.mapa', $sorteos->first()->id ?? 1) }}"
+    <a href="{{ route('admin.boletas.mapa') }}"
     class="btn btn-warning fw-bold me-2 fs-5">
         <i class="bi bi-grid-3x3-gap"></i> Ver mapa
     </a>
-
     <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#generarBoletasModal">
         <i class="bi bi-magic me-1"></i> Generar boletas
     </button>
 @endsection
-
-
 
 @section('content')
     <div class="row g-4 mb-4">
@@ -70,7 +67,7 @@
         <div class="card-header d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
             <div>
                 <h5 class="mb-1 fw-bold">Listado de boletas</h5>
-                <small class="text-muted">Consulta las boletas generadas por asociado, crédito y sorteo.</small>
+                <small class="text-muted">Consulta las boletas generadas por asociado y crédito.</small>
             </div>
 
             <form method="GET" action="{{ route('admin.boletas.index') }}" class="row g-2 align-items-center">
@@ -80,16 +77,16 @@
                         name="search"
                         value="{{ $search }}"
                         class="form-control"
-                        placeholder="Buscar boleta, asociado o sorteo"
+                        placeholder="Buscar boleta o asociado"
                         style="min-width: 280px;"
                     >
                 </div>
 
                 <div class="col-auto">
                     <select name="per_page" class="form-select" onchange="this.form.submit()">
-                        <option value="10" {{ (int)$perPage === 10 ? 'selected' : '' }}>10</option>
-                        <option value="25" {{ (int)$perPage === 25 ? 'selected' : '' }}>25</option>
-                        <option value="50" {{ (int)$perPage === 50 ? 'selected' : '' }}>50</option>
+                        <option value="10"  {{ (int)$perPage === 10  ? 'selected' : '' }}>10</option>
+                        <option value="25"  {{ (int)$perPage === 25  ? 'selected' : '' }}>25</option>
+                        <option value="50"  {{ (int)$perPage === 50  ? 'selected' : '' }}>50</option>
                         <option value="100" {{ (int)$perPage === 100 ? 'selected' : '' }}>100</option>
                     </select>
                 </div>
@@ -112,7 +109,6 @@
                                 <th>Número</th>
                                 <th>Asociado</th>
                                 <th>Documento</th>
-                                <th>Sorteo</th>
                                 <th>Crédito</th>
                                 <th>Monto base</th>
                                 <th>Ganadora</th>
@@ -130,7 +126,6 @@
                                     </td>
                                     <td>{{ $boleta->asociado?->nombre_completo ?? '—' }}</td>
                                     <td>{{ $boleta->asociado?->documento ?? '—' }}</td>
-                                    <td>{{ $boleta->sorteo?->nombre ?? '—' }}</td>
                                     <td>{{ $boleta->credito?->numero_credito ?? '—' }}</td>
                                     <td>${{ number_format((float)$boleta->monto_base, 0, ',', '.') }}</td>
                                     <td>
@@ -155,7 +150,6 @@
                     <div class="text-muted small">
                         Mostrando {{ $boletas->firstItem() }} a {{ $boletas->lastItem() }} de {{ $boletas->total() }} registros
                     </div>
-
                     <div>
                         {{ $boletas->links() }}
                     </div>
@@ -170,6 +164,7 @@
         </div>
     </div>
 
+    <!-- MODAL GENERAR BOLETAS -->
     <div class="modal fade" id="generarBoletasModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content rounded-4 border-0 shadow">
@@ -182,35 +177,27 @@
                     @csrf
 
                     <div class="modal-body">
-                        <div id="generarBoletasCampos">
-                            <div class="mb-3">
-                                <label class="form-label">Selecciona el sorteo</label>
-                                <select name="sorteo_id" class="form-select" required id="sorteoSelectGenerar">
-                                    <option value="">Selecciona un sorteo</option>
-                                    @foreach($sorteos as $sorteo)
-                                        <option value="{{ $sorteo->id }}">
-                                            {{ $sorteo->nombre }} - {{ $sorteo->fecha_sorteo->format('d/m/Y') }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </div>
 
+                        <!-- CAMPOS NORMALES -->
+                        <div id="generarBoletasCampos">
                             <div class="alert alert-warning rounded-4 mb-0">
+                                <i class="bi bi-info-circle me-2"></i>
                                 Puedes generar boletas varias veces. El sistema solo agregará nuevas boletas a los créditos que todavía no tengan las que les corresponden.
                             </div>
                         </div>
 
+                        <!-- PROGRESO -->
                         <div id="generarBoletasProgreso" class="d-none text-center py-3">
                             <div class="spinner-border text-primary mb-4" style="width: 3rem; height: 3rem;" role="status"></div>
 
                             <h5 class="fw-bold mb-2">Procesando generación</h5>
-                            <p class="text-muted mb-4" id="textoProgresoBoletas">Cargando...</p>
+                            <p class="text-muted mb-4" id="textoProgresoBoletas">Iniciando...</p>
 
                             <div class="progress rounded-pill" style="height: 10px;">
                                 <div id="barraProgresoBoletas"
-                                    class="progress-bar progress-bar-striped progress-bar-animated"
+                                    class="progress-bar progress-bar-striped progress-bar-animated bg-primary"
                                     role="progressbar"
-                                    style="width: 15%">
+                                    style="width: 5%; transition: width 0.8s ease;">
                                 </div>
                             </div>
                         </div>
@@ -227,81 +214,50 @@
         </div>
     </div>
 
-    <div class="content-card card mt-4">
-        <div class="card-header">
-            <h5 class="mb-1 fw-bold">Eliminar boletas por sorteo</h5>
-            <small class="text-muted">Úsalo solo si necesitas regenerar un sorteo completo.</small>
-        </div>
-        <div class="card-body">
-            <div class="row g-3">
-                @foreach($sorteos as $sorteo)
-                    <div class="col-md-6 col-lg-4">
-                        <div class="border rounded-4 p-3 h-100">
-                            <div class="fw-semibold">{{ $sorteo->nombre }}</div>
-                            <div class="text-muted small mb-3">{{ $sorteo->fecha_sorteo->format('d/m/Y') }}</div>
-
-                            <form action="{{ route('admin.boletas.destroyBySorteo', $sorteo) }}" method="POST" onsubmit="return confirm('¿Seguro que deseas eliminar todas las boletas de este sorteo?')">
-                                @csrf
-                                @method('DELETE')
-                                <button class="btn btn-outline-danger btn-sm w-100">
-                                    <i class="bi bi-trash me-1"></i> Eliminar boletas
-                                </button>
-                            </form>
-                        </div>
-                    </div>
-                @endforeach
-            </div>
-        </div>
-    </div>
 @endsection
 
 @push('scripts')
 <script>
     document.addEventListener('DOMContentLoaded', function () {
-        const form = document.getElementById('generarBoletasForm');
-        const campos = document.getElementById('generarBoletasCampos');
-        const progreso = document.getElementById('generarBoletasProgreso');
-        const footer = document.getElementById('generarBoletasFooter');
-        const submitBtn = document.getElementById('btnSubmitGenerarBoletas');
+        const form      = document.getElementById('generarBoletasForm');
+        const campos    = document.getElementById('generarBoletasCampos');
+        const progreso  = document.getElementById('generarBoletasProgreso');
+        const footer    = document.getElementById('generarBoletasFooter');
+        const texto     = document.getElementById('textoProgresoBoletas');
+        const barra     = document.getElementById('barraProgresoBoletas');
         const cerrarBtn = document.getElementById('cerrarGenerarBoletasBtn');
-        const sorteoSelect = document.getElementById('sorteoSelectGenerar');
-        const texto = document.getElementById('textoProgresoBoletas');
-        const barra = document.getElementById('barraProgresoBoletas');
 
         if (!form) return;
 
-        form.addEventListener('submit', function (e) {
-            if (!sorteoSelect.value) {
-                return;
-            }
-
+        form.addEventListener('submit', function () {
             campos.classList.add('d-none');
             progreso.classList.remove('d-none');
             footer.classList.add('d-none');
 
-            if (cerrarBtn) {
-                cerrarBtn.style.display = 'none';
-            }
+            if (cerrarBtn) cerrarBtn.style.display = 'none';
 
-            submitBtn.disabled = true;
-
-            texto.textContent = 'Cargando...';
+            texto.textContent = 'Calculando boletas por crédito...';
             barra.style.width = '15%';
 
             setTimeout(() => {
-                texto.textContent = 'Eligiendo las boletas para cada asociado...';
+                texto.textContent = 'Generando números únicos...';
+                barra.style.width = '35%';
+            }, 1000);
+
+            setTimeout(() => {
+                texto.textContent = 'Guardando boletas en la base de datos...';
                 barra.style.width = '55%';
-            }, 900);
+            }, 2500);
 
             setTimeout(() => {
-                texto.textContent = 'Enviando correos electrónicos al asociado...';
-                barra.style.width = '85%';
-            }, 2200);
+                texto.textContent = 'Enviando correos electrónicos a los asociados...';
+                barra.style.width = '75%';
+            }, 4000);
 
             setTimeout(() => {
-                texto.textContent = 'Finalizando proceso...';
-                barra.style.width = '98%';
-            }, 3600);
+                texto.textContent = 'Finalizando proceso, por favor espera...';
+                barra.style.width = '92%';
+            }, 6000);
         });
     });
 </script>
