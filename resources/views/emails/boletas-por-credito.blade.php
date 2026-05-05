@@ -52,7 +52,6 @@
             <td style="width:50%; padding:6px; vertical-align:middle;">
                 <div style="background:rgba(255,255,255,0.65); border:1px solid #a8d5c2; border-radius:12px; padding:12px; text-align:center;">
                     @if($premioUno && $premioUno->imagen)
-                     
                         <img src="{{ url('storage/' . $premioUno->imagen) }}"
                             style="max-height:95px; max-width:175px; object-fit:contain; display:block; margin:0 auto 8px auto;">
                     @else

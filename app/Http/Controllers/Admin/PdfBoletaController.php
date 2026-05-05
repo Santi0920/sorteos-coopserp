@@ -5,8 +5,8 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Asociado;
 use App\Models\Boleta;
+use App\Models\Premio;
 use Barryvdh\DomPDF\Facade\Pdf;
-use Illuminate\Http\Request;
 
 class PdfBoletaController extends Controller
 {
@@ -28,9 +28,7 @@ class PdfBoletaController extends Controller
 
     protected function buildPdfAll(Asociado $asociado)
     {
-        $boletas = Boleta::with('sorteo')
-            ->where('asociado_id', $asociado->id)
-            ->orderBy('sorteo_id')
+        $boletas = Boleta::where('asociado_id', $asociado->id)
             ->orderBy('numero_boleta')
             ->get();
 
@@ -40,9 +38,14 @@ class PdfBoletaController extends Controller
                 ->with('error', 'Ese asociado no tiene boletas registradas.');
         }
 
+        $premios = Premio::where('activo', true)
+            ->orderBy('orden')
+            ->get();
+
         $pdf = Pdf::loadView('pdf.boletas-individual', [
             'asociado' => $asociado,
-            'boletas' => $boletas,
+            'boletas'  => $boletas,
+            'premios'  => $premios,
         ])->setPaper('a4', 'portrait');
 
         $filename = 'boletas-' . $asociado->documento . '.pdf';

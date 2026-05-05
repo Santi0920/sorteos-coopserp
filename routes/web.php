@@ -25,14 +25,12 @@ Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/', [App\Http\Controllers\Admin\DashboardController::class, 'index'])
     ->name('dashboard');
-    Route::get('/debug-email/{credito}/{sorteo}', function ($creditoId, $sorteoId) {
+    Route::get('/debug-email/{credito}', function ($creditoId) {
         $credito = \App\Models\Credito::with('asociado')->findOrFail($creditoId);
-        $sorteo  = \App\Models\Sorteo::findOrFail($sorteoId);
         $boletas = \App\Models\Boleta::where('credito_id', $creditoId)
-                    ->where('sorteo_id', $sorteoId)
                     ->get();
 
-        return new \App\Mail\BoletasPorCreditoMail($credito, $sorteo, $boletas);
+        return new \App\Mail\BoletasPorCreditoMail($credito, $boletas);
     });
     Route::get('importar', [ImportController::class, 'form'])
         ->name('import.form');

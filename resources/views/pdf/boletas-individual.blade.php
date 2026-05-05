@@ -190,8 +190,6 @@
         <thead>
             <tr>
                 <th style="width: 18%;">Número</th>
-                <th style="width: 28%;">Sorteo</th>
-                <th style="width: 18%;">Fecha</th>
                 <th style="width: 22%;">Monto base</th>
                 <th style="width: 14%;">Estado</th>
             </tr>
@@ -202,8 +200,6 @@
                     <td>
                         <span class="pill">{{ $boleta->numero_boleta }}</span>
                     </td>
-                    <td>{{ $boleta->sorteo?->nombre ?? '—' }}</td>
-                    <td>{{ $boleta->sorteo?->fecha_sorteo ? $boleta->sorteo->fecha_sorteo->format('d/m/Y') : '—' }}</td>
                     <td>${{ number_format((float)$boleta->monto_base, 0, ',', '.') }}</td>
                     <td>
                         @if($boleta->ganadora)

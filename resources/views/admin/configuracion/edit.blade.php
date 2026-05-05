@@ -1,166 +1,189 @@
 @extends('layouts.admin')
 
 @php
-    $title = 'Configuración General';
-    $subtitle = 'Administra las reglas principales del sistema de sorteos.';
+    $title = 'Configuración del Sistema';
+    $subtitle = 'Administra parámetros, módulos y reglas del sistema de sorteos.';
 @endphp
 
 @section('topbar_actions')
-    <button form="configForm" type="submit" class="btn btn-primary">
+    <button form="configForm" class="btn btn-primary">
         <i class="bi bi-save me-1"></i> Guardar cambios
     </button>
 @endsection
 
 @section('content')
-    <form id="configForm" action="{{ route('admin.configuracion.update') }}" method="POST">
-        @csrf
-        @method('PUT')
 
-        <div class="row g-4">
-            <div class="col-lg-8">
-                <div class="content-card card">
-                    <div class="card-header">
-                        <h5 class="mb-1 fw-bold">Parámetros de boletas</h5>
-                        <small class="text-muted">Define cómo se calcularán y numerarán las boletas.</small>
-                    </div>
-                    <div class="card-body">
-                        <div class="row g-4">
-                            <div class="col-md-6">
-                                <label class="form-label">Monto por boleta</label>
-                                <input 
-                                    type="text" 
-                                    id="monto_display"
-                                    class="form-control" 
-                                    placeholder="$ 0"
-                                    inputmode="numeric"
-                                >
-                                <input 
-                                    type="hidden" 
-                                    name="monto_por_boleta" 
-                                    id="monto_real"
-                                    value="{{ old('monto_por_boleta', $config['monto_por_boleta'] ?? '') }}"
-                                >
-                            </div>
+<form id="configForm" action="{{ route('admin.configuracion.update') }}" method="POST">
+@csrf
+@method('PUT')
 
+<div class="row g-4">
 
-                            <div class="col-md-4">
-                                <label class="form-label">Longitud número boleta</label>
-                                <input
-                                    type="number"
-                                    min="1"
-                                    max="10"
-                                    name="longitud_numero_boleta"
-                                    class="form-control"
-                                    value="{{ old('longitud_numero_boleta', $config['longitud_numero_boleta'] ?? '4') }}"
-                                    required disabled
-                                >
-                            </div>
+    {{-- ================= RESUMEN GENERAL ================= --}}
+    <div class="col-12">
+        <div class="row g-3">
 
-                            <div class="col-md-4">
-                                <label class="form-label">Rango desde</label>
-                                <input
-                                    type="text"
-                                    name="rango_boleta_desde"
-                                    class="form-control"
-                                    value="{{ old('rango_boleta_desde', $config['rango_boleta_desde'] ?? '0000') }}"
-                                    required disabled
-                                >
-                            </div>
-
-                            <div class="col-md-4">
-                                <label class="form-label">Rango hasta</label>
-                                <input
-                                    type="text"
-                                    name="rango_boleta_hasta"
-                                    class="form-control"
-                                    value="{{ old('rango_boleta_hasta', $config['rango_boleta_hasta'] ?? '9999') }}"
-                                    required disabled
-                                >
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="content-card card mt-4">
-                    <div class="card-header">
-                        <h5 class="mb-1 fw-bold">Texto promocional</h5>
-                        <small class="text-muted">Este contenido podrá mostrarse en la página pública del sorteo.</small>
-                    </div>
-                    <div class="card-body">
-                        <label class="form-label">Contenido promocional</label>
-                        <textarea
-                            name="texto_promocional"
-                            rows="6"
-                            class="form-control"
-                            placeholder="Escribe aquí el mensaje promocional del sistema..."
-                        >{{ old('texto_promocional', $config['texto_promocional'] ?? '') }}</textarea>
-                    </div>
+            <div class="col-md-3">
+                <div class="card p-3 shadow-sm border-0 rounded-4">
+                    <small class="text-muted">Monto por boleta</small>
+                    <h4 class="fw-bold mb-0">
+                        ${{ number_format((float)($config['monto_por_boleta'] ?? 0), 0, ',', '.') }}
+                    </h4>
                 </div>
             </div>
 
-            <div class="col-lg-4">
-                <div class="content-card card">
-                    <div class="card-header">
-                        <h5 class="mb-1 fw-bold">Resumen</h5>
-                        <small class="text-muted">Configuraciones centrales del sistema.</small>
-                    </div>
-                    <div class="card-body">
-                        <div class="p-3 rounded-4 border mb-3">
-                            <div class="small text-muted">Monto actual por boleta</div>
-                            <div class="fw-bold fs-4">
-                                ${{ number_format((float)($config['monto_por_boleta'] ?? 0), 0, ',', '.') }}
-                            </div>
-                        </div>
-
-                        <div class="p-3 rounded-4 border mb-3">
-                            <div class="small text-muted">Longitud actual</div>
-                            <div class="fw-bold fs-4">
-                                {{ $config['longitud_numero_boleta'] ?? 4 }} dígitos
-                            </div>
-                        </div>
-
-                        <div class="p-3 rounded-4 border">
-                            <div class="small text-muted">Rango permitido</div>
-                            <div class="fw-bold fs-5">
-                                {{ $config['rango_boleta_desde'] ?? '0000' }} - {{ $config['rango_boleta_hasta'] ?? '9999' }}
-                            </div>
-                        </div>
-                    </div>
+            <div class="col-md-3">
+                <div class="card p-3 shadow-sm border-0 rounded-4">
+                    <small class="text-muted">Líneas activas</small>
+                    <h4 class="fw-bold mb-0">{{ $lineasActivas }}</h4>
                 </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="card p-3 shadow-sm border-0 rounded-4">
+                    <small class="text-muted">Líneas participando</small>
+                    <h4 class="fw-bold mb-0">{{ $lineasParticipando }}</h4>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="card p-3 shadow-sm border-0 rounded-4">
+                    <small class="text-muted">Premios activos</small>
+                    <h4 class="fw-bold mb-0">{{ $premiosActivos }}</h4>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    {{-- ================= BOLETAS ================= --}}
+    <div class="col-lg-6">
+        <div class="content-card card h-100">
+            <div class="card-header">
+                <h5 class="fw-bold mb-1">Configuración de Boletas</h5>
+                <small class="text-muted">Reglas de asignación</small>
+            </div>
+
+            <div class="card-body">
+
+                <label class="form-label">Monto por boleta</label>
+                <input id="monto_display" class="form-control mb-3" placeholder="$ 0">
+
+                <input type="hidden" name="monto_por_boleta" id="monto_real"
+                    value="{{ $config['monto_por_boleta'] ?? '' }}">
+
+                <div class="alert alert-info mt-3">
+                    💡 Por cada monto configurado se genera automáticamente una boleta.
+                </div>
+
             </div>
         </div>
-    </form>
+    </div>
 
-@push('scripts')
-        <script>
-            document.addEventListener('DOMContentLoaded', function () {
-                const display = document.getElementById('monto_display');
-                const real    = document.getElementById('monto_real');
+    {{-- ================= LINEAS ================= --}}
+    <div class="col-lg-6">
+        <div class="content-card card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <div>
+                    <h5 class="fw-bold mb-1">Líneas de Crédito</h5>
+                    <small class="text-muted">Gestión del módulo</small>
+                </div>
 
-                // Formatear valor inicial si existe
-                if (real.value) {
-                    let formatted = parseInt(real.value, 10).toLocaleString('es-CO');
-                    display.value = '$ ' + formatted;
-                }
+                <a href="{{ route('admin.lineas.index') }}" class="btn btn-sm btn-outline-primary">
+                    Administrar
+                </a>
+            </div>
 
-                display.addEventListener('input', function () {
-                    let raw = this.value.replace(/\D/g, '');
+            <div class="card-body">
 
-                    if (!raw) {
-                        this.value = '';
-                        real.value = '';
-                        return;
-                    }
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Total líneas</span>
+                    <strong>{{ $lineas }}</strong>
+                </div>
 
-                    let formatted = parseInt(raw, 10).toLocaleString('es-CO');
-                    this.value = '$ ' + formatted;
-                    real.value = raw;
-                });
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Activas</span>
+                    <strong class="text-success">{{ $lineasActivas }}</strong>
+                </div>
 
-                display.addEventListener('paste', function () {
-                    setTimeout(() => display.dispatchEvent(new Event('input')), 0);
-                });
-            });
-        </script>
-@endpush
+                <div class="d-flex justify-content-between">
+                    <span>Participando</span>
+                    <strong class="text-primary">{{ $lineasParticipando }}</strong>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    {{-- ================= PREMIOS ================= --}}
+    <div class="col-lg-6">
+        <div class="content-card card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <div>
+                    <h5 class="fw-bold mb-1">Premios</h5>
+                    <small class="text-muted">Gestión de premios</small>
+                </div>
+
+                <a href="{{ route('admin.premios.index') }}" class="btn btn-sm btn-outline-primary">
+                    Administrar
+                </a>
+            </div>
+
+            <div class="card-body">
+
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Total premios</span>
+                    <strong>{{ $premios }}</strong>
+                </div>
+
+                <div class="d-flex justify-content-between">
+                    <span>Activos</span>
+                    <strong class="text-success">{{ $premiosActivos }}</strong>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    {{-- ================= TEXTO ================= --}}
+    <div class="col-lg-6">
+        <div class="content-card card h-100">
+            <div class="card-header">
+                <h5 class="fw-bold mb-1">Texto Promocional</h5>
+                <small class="text-muted">Mensaje público</small>
+            </div>
+
+            <div class="card-body">
+
+                <textarea
+                    name="texto_promocional"
+                    rows="6"
+                    class="form-control"
+                >{{ $config['texto_promocional'] ?? '' }}</textarea>
+
+            </div>
+        </div>
+    </div>
+
+</div>
+</form>
+
+{{-- SCRIPT MONTO --}}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const display = document.getElementById('monto_display');
+    const real = document.getElementById('monto_real');
+
+    if (real.value) {
+        display.value = '$ ' + parseInt(real.value).toLocaleString('es-CO');
+    }
+
+    display.addEventListener('input', function () {
+        let raw = this.value.replace(/\D/g, '');
+        this.value = raw ? '$ ' + parseInt(raw).toLocaleString('es-CO') : '';
+        real.value = raw;
+    });
+});
+</script>
+
 @endsection
