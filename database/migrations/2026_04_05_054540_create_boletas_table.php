@@ -9,23 +9,95 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('boletas', function (Blueprint $table) {
+
             $table->id();
 
-            $table->foreignId('asociado_id')->constrained('asociados')->cascadeOnDelete();
-            $table->foreignId('credito_id')->nullable()->constrained('creditos')->nullOnDelete();
-            $table->foreignId('sorteo_id')->nullable()->constrained('sorteos')->cascadeOnDelete();
+            /*
+            ==========================================
+            RELACIONES
+            ==========================================
+            */
 
-            $table->string('numero_boleta', 4); // 0000 a 9999
-            $table->decimal('monto_base', 15, 2)->default(0); // monto usado para asignación
-            $table->integer('bloque_boletas')->default(1); // cuántas boletas generó ese bloque
-            $table->boolean('ganadora')->default(false);
+            $table->foreignId('sorteo_id')
+                ->constrained('sorteos')
+                ->cascadeOnDelete();
+
+            $table->foreignId('asociado_id')
+                ->constrained('asociados')
+                ->cascadeOnDelete();
+
+            $table->foreignId('credito_id')
+                ->nullable()
+                ->constrained('creditos')
+                ->nullOnDelete();
+
+            /*
+            ==========================================
+            BOLETA
+            ==========================================
+            */
+
+            /*
+            Compatible con:
+            00
+            9999
+            000000
+            etc
+            */
+            $table->string('numero_boleta', 20);
+
+            /*
+            Monto del crédito usado
+            para calcular boletas
+            */
+            $table->decimal('monto_base', 15, 2)
+                ->default(0);
+
+            /*
+            Cantidad total generada
+            para ese crédito/persona
+            */
+            $table->integer('bloque_boletas')
+                ->default(1);
+
+            /*
+            Marca si ganó
+            */
+            $table->boolean('ganadora')
+                ->default(false);
 
             $table->timestamps();
 
-            $table->unique(['sorteo_id', 'numero_boleta']);
-            $table->index(['asociado_id', 'sorteo_id']);
+            /*
+            ==========================================
+            RESTRICCIONES
+            ==========================================
+            */
+
+            /*
+            NO repetir número
+            dentro del mismo sorteo
+            */
+            $table->unique([
+                'sorteo_id',
+                'numero_boleta'
+            ]);
+
+            /*
+            CONSULTAS
+            */
+            $table->index([
+                'asociado_id',
+                'sorteo_id'
+            ]);
+
+            $table->index([
+                'credito_id',
+                'sorteo_id'
+            ]);
         });
     }
+    
 
     public function down(): void
     {

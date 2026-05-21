@@ -11,8 +11,6 @@ class LandingController extends Controller
 {
     public function index()
     {
-        $textoPromocional = ConfiguracionGeneral::where('clave', 'texto_promocional')->value('valor')
-            ?? 'Participa en nuestros sorteos y gana premios increíbles.';
 
         $sorteos = Sorteo::query()
             ->where('estado', 'programado')
@@ -26,6 +24,6 @@ class LandingController extends Controller
             ->orderByDesc('id')
             ->get();
 
-        return view('public.landing', compact('textoPromocional', 'sorteos', 'premios'));
+        return view('public.landing', compact('sorteos', 'premios'));
     }
 }

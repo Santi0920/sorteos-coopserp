@@ -3,154 +3,97 @@
 namespace App\Services;
 
 use App\Models\Boleta;
-use App\Models\ConfiguracionGeneral;
-use App\Models\Credito;
+use App\Models\Sorteo;
 use Illuminate\Support\Facades\DB;
 
 class BoletaGeneratorService
 {
-    public function __construct(
-        protected CreditoBoletaNotificationService $notificationService
-    ) {
-    }
-
-    public function generateForSorteo(): array
+    public function generateForSorteo(Sorteo $sorteo)
     {
-        $montoPorBoleta = (float) $this->getConfig('monto_por_boleta', 1000000);
-        $longitud       = (int) $this->getConfig('longitud_numero_boleta', 4);
-        $rangoDesde     = (int) $this->getConfig('rango_boleta_desde', 0);
-        $rangoHasta     = (int) $this->getConfig('rango_boleta_hasta', 9999);
+        return DB::transaction(function () use ($sorteo) {
 
-        // Solo créditos cuya línea tenga participa_sorteo = true y esté activa
-        $creditos = Credito::query()
-            ->with(['asociado', 'lineaCredito'])
-            ->where('participa_sorteo', true)
-            ->whereHas('lineaCredito', function ($q) {
-                $q->where('participa_sorteo', true)
-                  ->where('activo', true);
-            })
-            ->whereHas('asociado', function ($q) {
-                $q->where('activo', true);
-            })
-            ->orderBy('id')
-            ->get();
+            // 🔴 VALIDACIÓN: rango
+            if ($sorteo->numero_fin <= $sorteo->numero_inicio) {
+                return [
+                    'success' => false,
+                    'message' => 'El rango del sorteo no es válido',
+                ];
+            }
 
-        if ($creditos->isEmpty()) {
-            return [
-                'success'       => false,
-                'message'       => 'No hay créditos válidos para generar boletas.',
-                'generated'     => 0,
-                'asociados'     => 0,
-                'emails_sent'   => 0,
-                'emails_failed' => 0,
-            ];
-        }
+            // 🔴 ASOCIADOS DEL SORTEO (PIVOTE)
+            $asociados = $sorteo->asociados()->get();
 
-        $numerosUsados             = Boleta::pluck('numero_boleta')->toArray();
-        $generadas                 = 0;
-        $asociadosConNuevasBoletas = [];
-        $boletasNuevasPorCredito   = [];
+            if ($asociados->isEmpty()) {
+                return [
+                    'success' => false,
+                    'message' => 'No hay asociados vinculados al sorteo',
+                ];
+            }
 
-        DB::transaction(function () use (
-            $creditos,
-            $montoPorBoleta,
-            $longitud,
-            $rangoDesde,
-            $rangoHasta,
-            &$numerosUsados,
-            &$generadas,
-            &$asociadosConNuevasBoletas,
-            &$boletasNuevasPorCredito
-        ) {
-            foreach ($creditos as $credito) {
-                $cantidadQueDeberiaTener = (int) floor(((float) $credito->monto) / $montoPorBoleta);
+            // 🔴 POOL DE NÚMEROS DISPONIBLES
+            $numeros = DB::table('sorteo_numeros')
+                ->where('sorteo_id', $sorteo->id)
+                ->where('usado', false)
+                ->orderBy('id')
+                ->get();
 
-                if ($cantidadQueDeberiaTener <= 0) continue;
+            if ($numeros->isEmpty()) {
+                return [
+                    'success' => false,
+                    'message' => 'No hay números disponibles en el pool',
+                ];
+            }
 
-                $yaGeneradas   = Boleta::where('credito_id', $credito->id)->count();
-                $nuevasBoletas = $cantidadQueDeberiaTener - $yaGeneradas;
+            $totalBoletas = $numeros->count();
+            $totalAsociados = $asociados->count();
 
-                if ($nuevasBoletas <= 0) continue;
+            // 🔴 CUÁNTAS BOLETAS POR ASOCIADO
+            $base = intdiv($totalBoletas, $totalAsociados);
+            $resto = $totalBoletas % $totalAsociados;
 
-                $asociadosConNuevasBoletas[$credito->asociado_id] = true;
+            $index = 0;
+            $creadas = 0;
 
-                for ($i = 0; $i < $nuevasBoletas; $i++) {
-                    $numeroGenerado = $this->generateUniqueNumber(
-                        $numerosUsados, $rangoDesde, $rangoHasta, $longitud
-                    );
+            foreach ($asociados as $i => $asociado) {
 
-                    $boleta = Boleta::create([
-                        'asociado_id'    => $credito->asociado_id,
-                        'credito_id'     => $credito->id,
-                        'numero_boleta'  => $numeroGenerado,
-                        'monto_base'     => (float) $credito->monto,
-                        'bloque_boletas' => $cantidadQueDeberiaTener,
-                        'ganadora'       => false,
+                $cantidad = $base;
+
+                // repartir sobrantes
+                if ($resto > 0) {
+                    $cantidad++;
+                    $resto--;
+                }
+
+                for ($j = 0; $j < $cantidad; $j++) {
+
+                    if (!isset($numeros[$index])) {
+                        break;
+                    }
+
+                    $numero = $numeros[$index];
+
+                    Boleta::create([
+                        'sorteo_id' => $sorteo->id,
+                        'asociado_id' => $asociado->id,
+                        'numero_boleta' => $numero->numero,
+                        'monto_base' => 0,
+                        'ganadora' => false,
                     ]);
 
-                    $boletasNuevasPorCredito[$credito->id][] = $boleta;
-                    $numerosUsados[] = $numeroGenerado;
-                    $generadas++;
+                    DB::table('sorteo_numeros')
+                        ->where('id', $numero->id)
+                        ->update(['usado' => true]);
+
+                    $index++;
+                    $creadas++;
                 }
             }
-        });
 
-        $emailsSent   = 0;
-        $emailsFailed = 0;
-
-        foreach ($boletasNuevasPorCredito as $creditoId => $boletasCredito) {
-            $credito = $creditos->firstWhere('id', $creditoId);
-            if (!$credito) continue;
-
-            $result = $this->notificationService->sendEmailForCredito(
-                $credito,
-                collect($boletasCredito)
-            );
-
-            $result['success'] ? $emailsSent++ : $emailsFailed++;
-        }
-
-        if ($generadas === 0) {
             return [
-                'success'       => true,
-                'message'       => 'No hay nuevas boletas por generar. Los créditos actuales ya tienen sus boletas asignadas.',
-                'generated'     => 0,
-                'asociados'     => 0,
-                'emails_sent'   => 0,
-                'emails_failed' => 0,
+                'success' => true,
+                'message' => "Boletas generadas correctamente ({$creadas})",
+                'generated' => $creadas
             ];
-        }
-
-        return [
-            'success'       => true,
-            'message'       => 'Boletas generadas correctamente.',
-            'generated'     => $generadas,
-            'asociados'     => count($asociadosConNuevasBoletas),
-            'emails_sent'   => $emailsSent,
-            'emails_failed' => $emailsFailed,
-        ];
-    }
-
-    protected function getConfig(string $clave, $default = null)
-    {
-        return ConfiguracionGeneral::where('clave', $clave)->value('valor') ?? $default;
-    }
-
-    protected function generateUniqueNumber(array $usedNumbers, int $desde, int $hasta, int $length): string
-    {
-        $maxIntentos = 20000;
-        $intentos    = 0;
-
-        do {
-            $numero     = random_int($desde, $hasta);
-            $formateado = str_pad((string) $numero, $length, '0', STR_PAD_LEFT);
-            $intentos++;
-        } while (in_array($formateado, $usedNumbers) && $intentos < $maxIntentos);
-
-        if ($intentos >= $maxIntentos) {
-            throw new \RuntimeException('No fue posible generar más números únicos.');
-        }
-
-        return $formateado;
+        });
     }
 }

@@ -154,7 +154,7 @@
 
             <div class="d-flex gap-2 flex-wrap">
                 <a href="{{ route('consulta.boletas.pdf', ['token' => $asociado->token_consulta]) }}"
-                class="btn btn-outline-danger rounded-4">
+                class="btn btn-outline-danger rounded-4" target="_blank">
                     <i class="bi bi-file-earmark-pdf me-1"></i> Descargar PDF
                 </a>
 
@@ -193,7 +193,6 @@
                                     <tr>
                                         <th>Número</th>
                                         <th>Fecha</th>
-                                        <th>Monto base</th>
                                         <th>Estado</th>
                                     </tr>
                                 </thead>
@@ -205,9 +204,6 @@
                                             </td>
                                             <td>
                                                 {{ $boleta->sorteo?->fecha_sorteo ? $boleta->sorteo->fecha_sorteo->format('d/m/Y') : '—' }}
-                                            </td>
-                                            <td>
-                                                ${{ number_format((float) $boleta->monto_base, 0, ',', '.') }}
                                             </td>
                                             <td>
                                                 @if($boleta->ganadora)

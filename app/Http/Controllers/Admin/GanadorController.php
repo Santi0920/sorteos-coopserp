@@ -24,9 +24,8 @@ class GanadorController extends Controller
         if ($sorteoId) {
             $sorteoSeleccionado = Sorteo::with([
                 'premios.boletaGanadora.asociado',
-            ])->findOrFail($sorteoId);
+            ])->find($sorteoId);
 
-            // Todas las boletas globales, sin filtrar por sorteo
             $boletas = Boleta::with(['asociado'])
                 ->orderBy('numero_boleta')
                 ->get();
@@ -122,29 +121,73 @@ class GanadorController extends Controller
 
     protected function syncBoletasGanadoras(int $sorteoId): void
     {
-        // Limpiar ganadoras previas de premios de este sorteo
-        $boletasAnteriores = Premio::where('sorteo_id', $sorteoId)
-            ->pluck('boleta_ganadora_id')
-            ->filter()
-            ->toArray();
-
-        if (!empty($boletasAnteriores)) {
-            Boleta::whereIn('id', $boletasAnteriores)->update([
-                'ganadora' => false,
-            ]);
-        }
-
-        // Marcar las nuevas ganadoras
+        // 1. Obtener todas las boletas ganadoras ACTUALES desde premios activos
         $boletasGanadorasIds = Premio::where('sorteo_id', $sorteoId)
             ->where('activo', true)
             ->whereNotNull('boleta_ganadora_id')
             ->pluck('boleta_ganadora_id')
+            ->unique()
             ->toArray();
 
+        // 2. Reset total de boletas del sorteo (IMPORTANTE)
+        Boleta::where('sorteo_id', $sorteoId)
+            ->update(['ganadora' => false]);
+
+        // 3. Marcar solo las correctas
         if (!empty($boletasGanadorasIds)) {
-            Boleta::whereIn('id', $boletasGanadorasIds)->update([
-                'ganadora' => true,
-            ]);
+            Boleta::whereIn('id', $boletasGanadorasIds)
+                ->update(['ganadora' => true]);
         }
+    }
+
+    public function registrarResultado(Request $request, Sorteo $sorteo)
+    {
+        $validated = $request->validate([
+            'numero_resultado' => ['required', 'string'],
+            'soporte_resultado' => ['nullable', 'file', 'mimes:jpg,jpeg,png,pdf'],
+        ]);
+
+        $boleta = Boleta::with('asociado')
+            ->where('sorteo_id', $sorteo->id)
+            ->where('numero_boleta', $validated['numero_resultado'])
+            ->first();
+
+        $path = null;
+
+        if ($request->hasFile('soporte_resultado')) {
+            $path = $request->file('soporte_resultado')->store('resultados', 'public');
+        }
+
+        $sorteo->update([
+            'numero_resultado' => $validated['numero_resultado'],
+            'soporte_resultado' => $path,
+        ]);
+
+        return back()->with([
+            'success' => 'Resultado registrado correctamente.',
+            'boleta_ganadora' => $boleta
+        ]);
+    }
+
+    public function guardarResultado(Request $request)
+    {
+        $request->validate([
+            'sorteo_id' => 'required|exists:sorteos,id',
+            'numero_resultado' => 'required',
+            'soporte_resultado' => 'nullable|file|mimes:jpg,jpeg,png,pdf',
+        ]);
+
+        $sorteo = Sorteo::findOrFail($request->sorteo_id);
+
+        // guardar archivo si existe
+        if ($request->hasFile('soporte_resultado')) {
+            $path = $request->file('soporte_resultado')->store('soportes', 'public');
+            $sorteo->soporte_resultado = $path;
+        }
+
+        $sorteo->numero_resultado = $request->numero_resultado;
+        $sorteo->save();
+
+        return back()->with('success', 'Resultado guardado correctamente.');
     }
 }

@@ -3,80 +3,55 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use App\Models\Asociado;
-use App\Models\Credito;
-use App\Models\LineaCredito;
+use App\Models\Sorteo;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
+use Maatwebsite\Excel\Facades\Excel;
 
-    use Maatwebsite\Excel\Facades\Excel;
-use App\Exports\PlantillaImportExport;
 class ImportController extends Controller
 {
-    public function form()
+    public function form(Sorteo $sorteo)
     {
-        return view('admin.importar');
+        return view('admin.importar', compact('sorteo'));
     }
 
-    public function import(Request $request)
+    public function import(Request $request, Sorteo $sorteo)
     {
         $request->validate([
             'file' => 'required|file|mimes:csv,txt,xlsx'
         ]);
 
-        $file = $request->file('file');
-        $extension = $file->getClientOriginalExtension();
+        $rows = $this->readFile($request->file('file'));
 
-        $errores = [];
-        $filaNumero = 1;
+        if (count($rows) < 2) {
+            return back()->with('error', 'Archivo vacío o inválido.');
+        }
+
+        // 🔥 HEADER MAPPING
+        $headers = array_map(fn($h) => strtolower(trim($h)), $rows[0]);
+        unset($rows[0]);
+
+        $map = array_flip($headers);
+
+        // 🔥 VALIDACIÓN MÍNIMA
+        if (!isset($map['cedula']) || !isset($map['nombre'])) {
+            return back()->with('error', 'El archivo debe tener columnas: cedula, nombre');
+        }
 
         DB::beginTransaction();
 
         try {
 
-            // =========================================
-            // 📌 CASO 1: CSV o TXT
-            // =========================================
-            if (in_array($extension, ['csv', 'txt'])) {
-
-                $handle = fopen($file->getRealPath(), 'r');
-
-                $header = fgetcsv($handle); // saltar encabezado
-
-                while (($row = fgetcsv($handle)) !== false) {
-
-                    $filaNumero++;
-
-                    $this->procesarFila($row, $filaNumero, $errores);
-                }
-
-                fclose($handle);
-            }
-
-            // =========================================
-            // 📌 CASO 2: EXCEL (.xlsx)
-            // =========================================
-            if ($extension === 'xlsx') {
-
-                $rows = Excel::toArray([], $file)[0]; // primera hoja
-
-                foreach ($rows as $index => $row) {
-
-                    if ($index === 0) continue; // saltar encabezado
-
-                    $filaNumero = $index + 1;
-
-                    $this->procesarFila($row, $filaNumero, $errores);
-                }
+            foreach ($rows as $index => $row) {
+                $this->processRow($row, $map, $sorteo, $index + 2);
             }
 
             DB::commit();
 
-            return back()->with('success',
-                "Importación completada. Errores: " . count($errores) .
-                (count($errores) ? " → " . implode(' | ', $errores) : '')
-            );
+            return redirect()
+                ->route('admin.sorteos.index')
+                ->with('success', 'Importación completada correctamente.');
 
         } catch (\Exception $e) {
 
@@ -86,151 +61,80 @@ class ImportController extends Controller
         }
     }
 
-    private function procesarFila($row, &$filaNumero, &$errores)
+    private function readFile($file)
     {
-        try {
+        $ext = $file->getClientOriginalExtension();
 
-            // Rellenar hasta 9 columnas por si email viene vacío
-            $row = array_pad($row, 9, null);
+        if (in_array($ext, ['csv', 'txt'])) {
 
-            if (count($row) < 9) {
-                $errores[] = "Fila $filaNumero: columnas incompletas";
-                return;
+            $handle = fopen($file->getRealPath(), 'r');
+
+            $rows = [];
+            while (($row = fgetcsv($handle)) !== false) {
+                $rows[] = $row;
             }
 
-            [
-                $cuenta,
-                $agencia,
-                $nomina,
-                $cedula,
-                $nombreCompleto,
-                $lineaCodigo,
-                $numeroCredito,
-                $monto,
-                $email
-            ] = $row;
+            fclose($handle);
 
-            // LIMPIEZA
-            $cedula        = trim($cedula ?? '');
-            $nombreCompleto = trim($nombreCompleto ?? '');
-            $numeroCredito  = trim($numeroCredito ?? '');
-            $lineaCodigo    = trim($lineaCodigo ?? '');
-            $cuenta         = trim($cuenta ?? '');
-            $agencia        = trim($agencia ?? '');
-            $nomina         = trim($nomina ?? '');
-
-            // EMAIL: validar formato, si no es válido guardar null
-            $emailLimpio = trim($email ?? '');
-            $emailFinal  = filter_var($emailLimpio, FILTER_VALIDATE_EMAIL)
-                ? $emailLimpio
-                : null;
-
-            // VALIDACIONES OBLIGATORIAS
-            if (!$cedula || !$nombreCompleto || !$numeroCredito || !$monto) {
-                $errores[] = "Fila $filaNumero: datos vacíos";
-                return;
-            }
-
-            // LIMPIAR MONTO
-            $montoLimpio = (float) str_replace(['$', '.', ','], ['', '', '.'], $monto);
-
-            if (!is_numeric($montoLimpio) || $montoLimpio <= 0) {
-                $errores[] = "Fila $filaNumero: monto inválido ($monto)";
-                return;
-            }
-
-            // SEPARAR NOMBRES Y APELLIDOS
-            $partes    = explode(' ', $nombreCompleto);
-            $nombres   = array_shift($partes);
-            $apellidos = implode(' ', $partes);
-
-            // ASOCIADO: crear o actualizar por cédula
-            $asociado = Asociado::updateOrCreate(
-                ['documento' => $cedula],
-                [
-                    'nombres'        => $nombres,
-                    'apellidos'      => $apellidos,
-                    'cuenta'         => $cuenta,
-                    'agencia'        => $agencia,
-                    'nomina'         => $nomina,
-                    'email'          => $emailFinal,
-                    'activo'         => true,
-                    'token_consulta' => Str::uuid(),
-                ]
-            );
-
-            // LÍNEA DE CRÉDITO
-            $linea = LineaCredito::where('codigo', $lineaCodigo)->first();
-
-            if (!$linea) {
-                $errores[] = "Fila $filaNumero: línea no existe ($lineaCodigo)";
-                return;
-            }
-
-            // EVITAR CRÉDITO DUPLICADO
-            if (Credito::where('numero_credito', $numeroCredito)->exists()) {
-                $errores[] = "Fila $filaNumero: crédito duplicado ($numeroCredito)";
-                return;
-            }
-
-            // CREAR CRÉDITO
-            Credito::create([
-                'asociado_id'      => $asociado->id,
-                'linea_credito_id' => $linea->id,
-                'numero_credito'   => $numeroCredito,
-                'monto'            => $montoLimpio,
-                'fecha_desembolso' => now(),
-                'participa_sorteo' => true,
-            ]);
-
-        } catch (\Exception $e) {
-            $errores[] = "Fila $filaNumero: error → " . $e->getMessage();
+            return $rows;
         }
+
+        if ($ext === 'xlsx') {
+            return Excel::toArray([], $file)[0];
+        }
+
+        return [];
     }
 
-    public function template()
+    private function processRow($row, $map, $sorteo, $fila)
     {
-        $headers = [
-            'Cuenta',
-            'Agencia',
-            'Nomina',
-            'Cedula',
-            'Nombre',
-            'Linea',
-            'Credito',
-            'Monto',
-            'Email'
-        ];
+        $cedula  = $row[$map['cedula']] ?? null;
+        $nombre  = $row[$map['nombre']] ?? null;
 
-        $example = [
-            '125463',
-            'Quibdo',
-            'Beneficencia',
-            '12356489',
-            'Juan Perez',
-            '99',
-            '15489',
-            '3900000',
-            'juan@coopserp.com'
-        ];
+        if (!$cedula || !$nombre) {
+            throw new \Exception("Fila $fila: cédula o nombre obligatorio.");
+        }
 
-        $filename = "plantilla_importacion.csv";
+        $credito = isset($map['credito'])
+            ? (float) ($row[$map['credito']] ?? 0)
+            : 0;
 
-        $handle = fopen('php://temp', 'r+');
-        fputcsv($handle, $headers);
-        fputcsv($handle, $example);
-        rewind($handle);
+        $asociado = Asociado::updateOrCreate(
+            ['documento' => $cedula],
+            [
+                'nombres'  => $nombre,
+                'agencia'  => $row[$map['agencia']] ?? null,
+                'cuenta'   => $row[$map['cuenta']] ?? null,
+                'nomina'   => $row[$map['nomina']] ?? null,
+                'email'    => $row[$map['email']] ?? null,
+            ]
+        );
 
-        return response()->streamDownload(function () use ($handle) {
-            fpassthru($handle);
-        }, $filename, [
-            'Content-Type' => 'text/csv',
+        // 🔥 CÁLCULO DE BOLETAS
+        $boletas = 1;
+
+        if ($sorteo->tipo_asignacion === 'por_valor') {
+
+            if ($sorteo->monto_por_boleta > 0) {
+                $boletas = max(1, floor($credito / $sorteo->monto_por_boleta));
+            }
+        }
+
+        // 🔥 RELACIÓN
+        $sorteo->asociados()->syncWithoutDetaching([
+            $asociado->id => [
+                'credito' => $credito,
+                'boletas_asignadas' => $boletas,
+            ]
         ]);
     }
 
-
-    public function templateExcel()
+    // 📥 DESCARGA PLANTILLA
+    public function template()
     {
-        return Excel::download(new PlantillaImportExport, 'plantilla_importacion.xlsx');
+        return response()->streamDownload(function () {
+            echo "cedula,nombre,agencia,cuenta,nomina,email,credito\n";
+            echo "12345678,Juan Perez,Quibdo,1001,Nomina1,juan@email.com,5000000\n";
+        }, 'plantilla_asociados.csv');
     }
 }

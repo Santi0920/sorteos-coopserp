@@ -19,7 +19,10 @@ class PremioController extends Controller
             $perPage = 10;
         }
 
-        $premios = Premio::with('sorteo')
+        $premios = Premio::with([
+                'boletaGanadora',
+                'sorteo'
+            ])
             ->when($search, function ($query) use ($search) {
                 $query->where(function ($q) use ($search) {
                     $q->where('titulo', 'like', "%{$search}%")

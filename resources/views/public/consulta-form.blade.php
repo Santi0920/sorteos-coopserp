@@ -105,6 +105,21 @@
                 >
             </div>
 
+            <!-- 🔥 CONSENTIMIENTO LEGAL -->
+            <div class="form-check mb-3 text-start">
+                <input
+                    class="form-check-input"
+                    type="checkbox"
+                    id="consentimiento"
+                    name="consentimiento"
+                    required
+                >
+                <label class="form-check-label text-soft small" for="consentimiento">
+                    Autorizo el uso de mis datos personales para la consulta de boletas y fines del juego promocional,
+                    de acuerdo con la política de tratamiento de datos.
+                </label>
+            </div>
+
             <button type="submit" class="btn btn-primary w-100">
                 <i class="bi bi-search me-1"></i> Consultar boletas
             </button>

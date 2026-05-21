@@ -16,17 +16,53 @@
     </div>
 </div>
 
-<div class="content-card card mb-4">
-    <div class="card-body d-flex justify-content-between align-items-center flex-wrap gap-2">
+<div class="content-card card mb-4 border-0 shadow-sm">
+    <div class="card-body d-flex justify-content-between align-items-center flex-wrap gap-3">
+
+        <!-- CONTEXTO DEL SORTEO -->
         <div>
-            <h5 class="fw-bold mb-1">Mapa global de boletas</h5>
-            <small class="text-muted">
-                Total boletas asignadas: {{ count($boletas) }}
-            </small>
+
+            <div class="d-flex align-items-center gap-2 text-muted small mb-1">
+                <span>Sorteo activo:</span>
+
+                <span class="fw-semibold text-dark">
+                    {{ $sorteo->nombre }}
+                </span>
+
+                <span>•</span>
+
+                <span>
+                    {{ \Carbon\Carbon::parse($sorteo->fecha_sorteo)->translatedFormat('d M Y') }}
+                </span>
+            </div>
+
+            <div class="d-flex align-items-center gap-2">
+
+                <span class="badge bg-primary-subtle text-primary border border-primary-subtle">
+                    {{ count($boletas) }} Boletas asignadas al sorteo
+                </span>
+
+                <span class="text-muted small">
+                    Vista en tiempo real del sorteo
+                </span>
+
+            </div>
+
         </div>
-        <a href="{{ route('admin.boletas.index') }}" class="btn btn-light">
-            <i class="bi bi-arrow-left"></i> Volver
-        </a>
+
+        <!-- ACCIONES -->
+        <div class="d-flex gap-2">
+
+            <a href="{{ route('admin.boletas.index') }}"
+               class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-2">
+
+                <i class="bi bi-arrow-left"></i>
+                Volver
+
+            </a>
+
+        </div>
+
     </div>
 </div>
 
@@ -43,10 +79,12 @@
         <!-- GRID -->
         <div class="boletas-scroll">
             <div class="boletas-grid" id="gridBoletas">
-                @for($i = 0; $i <= 9999; $i++)
+                @for($i = (int)$sorteo->numero_inicio; $i <= (int)$sorteo->numero_fin; $i++)
                     @php
-                        $numero = str_pad($i, 4, '0', STR_PAD_LEFT);
-                        $boleta = $boletas[$numero] ?? null;
+                        $max = (int) $sorteo->numero_fin;
+                        $digits = strlen((string) $max);
+                        $numero = str_pad($i, $digits, '0', STR_PAD_LEFT);
+                        $boleta = $boletas[(string)$i] ?? null;
 
                         $estado = 'disponible';
                         if ($boleta) {

@@ -12,6 +12,7 @@ class Boleta extends Model
     protected $table = 'boletas';
 
     protected $fillable = [
+        'sorteo_id',
         'asociado_id',
         'credito_id',
         'numero_boleta',
@@ -25,6 +26,10 @@ class Boleta extends Model
         'monto_base' => 'decimal:2',
     ];
 
+    public function sorteo()
+    {
+        return $this->belongsTo(Sorteo::class);
+    }
 
     public function asociado()
     {

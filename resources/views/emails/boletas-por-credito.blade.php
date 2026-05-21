@@ -2,131 +2,193 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Boletas del Sorteo</title>
+    <title>Boletas</title>
 </head>
 
-<body style="margin:0; padding:20px; background:#f0f4f8; font-family:Arial, Helvetica, sans-serif;">
+<body style="margin:0; padding:20px; background:#eef2f5; font-family:Arial, Helvetica, sans-serif;">
 
 @foreach($boletas as $boleta)
+
+@php
+    $premioUno = $premios->where('orden', 1)->first();
+    $premioDos = $premios->where('orden', 2)->first();
+@endphp
+
 <div style="
-    max-width:700px;
-    margin:0 auto 40px auto;
-    background:linear-gradient(160deg, #e8f0ee 0%, #d6e8e2 100%);
-    border:2px solid #2d7a5f;
-    border-radius:16px;
+    width:720px;
+    margin:0 auto 30px auto;
+    background:#f8fbfa;
+    border:2px solid #2e7d5b;
+    border-radius:12px;
     overflow:hidden;
-    box-shadow:0 4px 20px rgba(0,0,0,0.15);
 ">
 
-    <!-- HEADER LOGOS + TITULO -->
-    <table width="100%" cellpadding="0" cellspacing="0" style="padding:16px 20px 10px 20px;">
+    <!-- HEADER -->
+    <table width="100%" style="padding:10px 15px;">
         <tr>
-            <td align="left" style="width:80px; vertical-align:middle;">
+            <td style="width:90px;">
                 <img src="https://www.coopserp.com/wp/wp-content/uploads/2024/04/Logo-grande-Coopserp-2019-e1721607356635.png"
-                     style="max-height:55px; max-width:75px; object-fit:contain;">
+                     style="max-height:65px;">
             </td>
-            <td align="center" style="vertical-align:middle; padding:0 10px;">
-                <div style="font-size:24px; font-weight:900; color:#1a5c40; letter-spacing:1px; text-transform:uppercase;">
+
+            <td style="text-align:center;">
+                <div style="font-size:26px; font-weight:900; color:#2e7d5b;">
                     SORTEOS MOTOCICLETAS AKT
                 </div>
-                <div style="font-size:11px; color:#2d5a45; font-weight:600; margin-top:4px;">
+                <div style="font-size:13px; font-weight:600;">
                     Juega con el premio mayor de la lotería de Cundinamarca en las siguientes fechas:
                 </div>
             </td>
-            <td align="right" style="width:80px; vertical-align:middle;">
+
+            <td style="width:90px; text-align:right;">
                 <img src="https://uiaf.gov.co/sites/default/files/styles/large/public/inline-images/coljuegos-logo_0.png"
-                     style="max-height:55px; max-width:75px; object-fit:contain;">
+                     style="max-height:65px;">
             </td>
         </tr>
     </table>
 
     <!-- PREMIOS -->
-    <table width="100%" cellpadding="0" cellspacing="0" style="padding:8px 16px 12px 16px;">
+    <table width="100%" style="padding:10px;">
         <tr>
-            @php
-                $premioUno = $premios->where('orden', 1)->first();
-                $premioDos = $premios->where('orden', 2)->first();
-            @endphp
 
-            <!-- PRIMER SORTEO -->
-            <td style="width:50%; padding:6px; vertical-align:middle;">
-                <div style="background:rgba(255,255,255,0.65); border:1px solid #a8d5c2; border-radius:12px; padding:12px; text-align:center;">
-                    @if($premioUno && $premioUno->imagen)
-                        <img src="{{ url('storage/' . $premioUno->imagen) }}"
-                            style="max-height:95px; max-width:175px; object-fit:contain; display:block; margin:0 auto 8px auto;">
-                    @else
-                        <div style="font-size:50px; margin-bottom:8px;">🏍️</div>
+            <!-- PREMIO 1 -->
+            <td style="width:50%; padding:8px;">
+                <div style="
+                    background:white;
+                    border-radius:12px;
+                    padding:12px;
+                    text-align:center;
+                    border:1px solid #ddd;
+                ">
+                    @if($premioUno?->imagen)
+                        <img src="{{ url('storage/'.$premioUno->imagen) }}"
+                             style="max-height:110px; margin-bottom:8px;">
                     @endif
-                    <div style="font-size:13px; font-weight:700; color:#1a1a1a;">Primer Sorteo:</div>
-                    <div style="font-size:12px; color:#1a1a1a; margin:3px 0;">
-                        Lunes <span style="background:#c8a84b; color:white; border-radius:4px; padding:1px 6px; font-weight:700;">31 de agosto</span> del 2026.
+
+                    <div style="font-weight:800; font-size:15px;">
+                        Primer Sorteo:
                     </div>
-                    <div style="font-size:11px; color:#555; margin-top:4px;">Premio:</div>
-                    <div style="font-size:15px; font-weight:900; color:#0f2e1e; line-height:1.2;">
-                        {{ $premioUno?->titulo ?? 'AKT FLEX 123.7 C.C.' }}
+
+                    <div style="font-size:13px;">
+                        Lunes
+                        <span style="
+                            background:#caa84b;
+                            color:white;
+                            padding:2px 6px;
+                            border-radius:4px;
+                            font-weight:700;
+                        ">
+                            31 de agosto
+                        </span>
+                        del 2026
+                    </div>
+
+                    <div style="margin-top:6px;">Premio:</div>
+
+                    <div style="font-size:18px; font-weight:900;">
+                        {{ $premioUno->titulo ?? 'AKT FLEX 123.7 C.C.' }}
                     </div>
                 </div>
             </td>
 
-            <!-- SEGUNDO SORTEO -->
-            <td style="width:50%; padding:6px; vertical-align:middle;">
-                <div style="background:rgba(255,255,255,0.65); border:1px solid #a8d5c2; border-radius:12px; padding:12px; text-align:center;">
-                    @if($premioDos && $premioDos->imagen)
-                        <img src="{{ url('storage/' . $premioDos->imagen) }}"
-                            style="max-height:95px; max-width:175px; object-fit:contain; display:block; margin:0 auto 8px auto;">
-                    @else
-                        <div style="font-size:50px; margin-bottom:8px;">🏍️</div>
+            <!-- PREMIO 2 -->
+            <td style="width:50%; padding:8px;">
+                <div style="
+                    background:white;
+                    border-radius:12px;
+                    padding:12px;
+                    text-align:center;
+                    border:1px solid #ddd;
+                ">
+                    @if($premioDos?->imagen)
+                        <img src="{{ url('storage/'.$premioDos->imagen) }}"
+                             style="max-height:110px; margin-bottom:8px;">
                     @endif
 
-                    <div style="font-size:13px; font-weight:700; color:#1a1a1a;">Segundo Sorteo:</div>
-                    <div style="font-size:12px; color:#1a1a1a; margin:3px 0;">
-                        Lunes <span style="background:#c8a84b; color:white; border-radius:4px; padding:1px 6px; font-weight:700;">28 de septiembre</span> del 2026.
+                    <div style="font-weight:800; font-size:15px;">
+                        Segundo Sorteo:
                     </div>
-                    <div style="font-size:11px; color:#555; margin-top:4px;">Premio:</div>
-                    <div style="font-size:15px; font-weight:900; color:#0f2e1e; line-height:1.2;">
-                        {{ $premioDos?->titulo ?? 'AKT CR4 150 CBS.' }}
+
+                    <div style="font-size:13px;">
+                        Lunes
+                        <span style="
+                            background:#caa84b;
+                            color:white;
+                            padding:2px 6px;
+                            border-radius:4px;
+                            font-weight:700;
+                        ">
+                            28 de septiembre
+                        </span>
+                        del 2026
+                    </div>
+
+                    <div style="margin-top:6px;">Premio:</div>
+
+                    <div style="font-size:18px; font-weight:900;">
+                        {{ $premioDos->titulo ?? 'AKT CR4 150 CBS' }}
                     </div>
                 </div>
             </td>
+
         </tr>
     </table>
 
-    <!-- BARRA BOLETA -->
-    <table width="100%" cellpadding="0" cellspacing="0"
-           style="background:linear-gradient(90deg, #1a6b48, #2d9c6a); padding:10px 20px;">
+    <!-- BARRA VERDE -->
+    <table width="100%" style="
+        background:#1f7a5a;
+        color:white;
+        padding:10px 15px;
+    ">
         <tr>
-            <td style="color:white; font-size:14px; font-weight:700; white-space:nowrap; vertical-align:middle;">
+            <td style="font-weight:700; font-size:15px;">
                 Boleta No.
                 <span style="
-                    background:#c8a84b;
-                    color:white;
-                    font-size:20px;
+                    background:#caa84b;
+                    padding:3px 14px;
+                    font-size:22px;
                     font-weight:900;
-                    padding:2px 14px;
                     border-radius:6px;
-                    margin-left:6px;
+                    margin-left:8px;
                     letter-spacing:3px;
-                ">{{ str_pad($boleta->numero_boleta, 4, '0', STR_PAD_LEFT) }}</span>
+                ">
+                    {{ str_pad($boleta->numero_boleta, 4, '0', STR_PAD_LEFT) }}
+                </span>
             </td>
-            <td style="color:white; font-size:11px; text-align:right; vertical-align:middle;">
-                📅 Fecha: {{ now()->format('d-M-Y') }} &nbsp;|&nbsp;
-                🕐 {{ now()->format('H:i:s') }} &nbsp;|&nbsp;
-                🏢 {{ $credito->asociado?->agencia ?? '—' }}
+
+            <td style="text-align:right; font-size:13px; Font-weight:1000;">
+                Fecha Emisión: {{ now()->format('d-M-Y') }}
+                &nbsp;&nbsp;
+                Hora: {{ now()->format('H:i:s') }}
+                &nbsp;&nbsp;
+                Agencia: {{ $credito->asociado?->agencia ?? '-' }}
             </td>
         </tr>
     </table>
 
-    <!-- DESCRIPCION -->
-    <div style="padding:14px 24px 20px 24px; text-align:center; font-size:11.5px; color:#1a1a1a; line-height:1.75;">
-        <div style="font-weight:900; font-size:12px; margin-bottom:6px;">DESCRIPCIÓN DE LA ACTIVIDAD:</div>
-        Aplican Términos y Condiciones del juego promocional, los cuales se encuentran publicados en la página web www.coopserp.com.<br>
+    <!-- DESCRIPCIÓN -->
+    <div style="
+        padding:15px 20px;
+        font-size:12px;
+        text-align:center;
+        line-height:1.6;
+    ">
+        <div style="font-weight:900; margin-bottom:5px;">
+            DESCRIPCIÓN DE LA ACTIVIDAD:
+        </div>
+
+        Aplican Términos y Condiciones del juego promocional, publicados en www.coopserp.com.<br>
         Esta boleta es intransferible, no se podrá vender, ceder, permutar ni endosar.<br>
-        Esta boleta le permite participar en los sorteos de las fechas Lunes 31 de agosto del 2026 y Lunes 28 de septiembre del 2026.<br>
-        Podrá consultar el asociado ganador en la página web www.coopserp.com.<br><br>
-        <em>Autoriza COLJUEGOS, Resolución No. 2026XXXXXX del XX del mes XXXXX del 2026.</em>
+        Participa en los sorteos del 31 de agosto y 28 de septiembre de 2026.<br>
+        Consulte el ganador en www.coopserp.com.<br><br>
+
+        <strong>
+            Autoriza COLJUEGOS, Resolución No. 2026XXXXXX del XX del mes XXXX del 2026.
+        </strong>
     </div>
 
 </div>
+
 @endforeach
 
 </body>

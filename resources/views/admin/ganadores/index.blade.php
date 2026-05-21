@@ -35,7 +35,9 @@
         </div>
     </div>
 
+
     @if($sorteoSeleccionado)
+
         <div class="row g-4 mb-4">
             <div class="col-lg-4">
                 <div class="content-card card h-100">
@@ -107,7 +109,93 @@
                 </div>
             </div>
         </div>
+        <!-- RESULTADO LOTERÍA + SOPORTE -->
+        <div class="content-card card mb-4">
+            <div class="card-header">
+                <h5 class="fw-bold mb-0">Resultado de lotería</h5>
+                <small class="text-muted">Registra número ganador y evidencia del sorteo</small>
+            </div>
 
+            <div class="card-body">
+
+                <!-- FORMULARIO -->
+                <form method="POST"
+                    action="{{ route('admin.ganadores.guardar') }}"
+                    enctype="multipart/form-data">
+
+                    @csrf
+
+                    <input type="hidden" name="sorteo_id" value="{{ $sorteoSeleccionado->id ?? '' }}">
+
+                    <div class="row g-3">
+
+                        <!-- NÚMERO GANADOR -->
+                        <div class="col-lg-4">
+                            <label class="form-label">Número ganador</label>
+                            <input type="text"
+                                name="numero_resultado"
+                                id="numeroGanador"
+                                class="form-control"
+                                placeholder="Ej: 0123" value="{{ $sorteoSeleccionado?->numero_resultado }}">    
+                        </div>
+
+                        <!-- BOTÓN GUARDAR -->
+                        <div class="col-lg-4 d-flex align-items-end">
+                            <button class="btn btn-primary w-100">
+                                <i class="bi bi-save me-1"></i> Guardar resultado
+                            </button>
+                        </div>
+
+                    </div>
+
+                    <!-- INPUT SOPORTE (SOLO SI NO EXISTE) -->
+                    @if(!$sorteoSeleccionado?->soporte_resultado)
+                        <div class="mt-3">
+                            <label class="form-label">Soporte del resultado</label>
+                            <input type="file" name="soporte_resultado" class="form-control">
+                        </div>
+                    @endif
+
+                </form>
+
+                <!-- SOPORTE EXISTENTE -->
+                @if($sorteoSeleccionado?->soporte_resultado)
+                    @php
+                        $file = $sorteoSeleccionado->soporte_resultado;
+                        $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+                        $url = asset('storage/' . $file);
+                    @endphp
+
+                    <hr>
+
+                    <div class="mt-3">
+                        <div class="text-muted small mb-2">Soporte del resultado actual</div>
+
+                        @if(in_array($ext, ['jpg','jpeg','png','webp']))
+                            <img src="{{ $url }}"
+                                class="img-fluid rounded-4 border"
+                                style="max-height: 280px; cursor:pointer;"
+                                onclick="openSoporteModal('{{ $url }}','image')">
+
+                        @elseif($ext === 'pdf')
+                            <div class="border rounded-4 overflow-hidden" style="height:300px;">
+                                <iframe src="{{ $url }}" width="100%" height="100%"></iframe>
+                            </div>
+
+                            <a href="{{ $url }}" target="_blank" class="btn btn-sm btn-outline-primary mt-2">
+                                <i class="bi bi-file-earmark-pdf"></i> Abrir PDF
+                            </a>
+
+                        @else
+                            <a href="{{ $url }}" target="_blank" class="btn btn-outline-secondary btn-sm">
+                                Descargar archivo
+                            </a>
+                        @endif
+                    </div>
+                @endif
+
+            </div>
+        </div>
         <div class="content-card card">
             <div class="card-header">
                 <h5 class="mb-1 fw-bold">Asignación de premios a boletas</h5>
@@ -199,4 +287,93 @@
             </div>
         </div>
     @endif
+
+@push('scripts')
+<script>
+
+
+function openSoporteModal(url, type) {
+
+    const img = document.getElementById('soporteModalImg');
+    const pdf = document.getElementById('soporteModalPdf');
+
+    img.classList.add('d-none');
+    pdf.classList.add('d-none');
+
+    if (type === 'image') {
+        img.src = url;
+        img.classList.remove('d-none');
+    } else {
+        pdf.src = url;
+        pdf.classList.remove('d-none');
+    }
+
+    new bootstrap.Modal(document.getElementById('soporteModal')).show();
+}
+
+
+document.getElementById('numeroGanador').addEventListener('input', function () {
+
+    let numero = this.value.trim();
+
+    const box = document.getElementById('resultadoAsociado');
+
+    if (numero.length < 2) {
+        box.innerHTML = '<span class="text-muted">Ingresa un número</span>';
+        return;
+    }
+
+    fetch(`{{ url('/admin/boletas/lookup') }}/${numero}`)
+        .then(res => res.json())
+        .then(data => {
+
+            if (!data.ok) {
+                box.innerHTML = '<span class="text-danger">No encontrado</span>';
+                return;
+            }
+
+            box.innerHTML = `
+                <div class="fw-bold">${data.nombre}</div>
+                <div class="text-muted small">${data.documento ?? ''}</div>
+                ${data.agencia ? `<div class="text-muted small">Agencia: ${data.agencia}</div>` : ''}
+            `;
+        })
+        .catch(() => {
+            box.innerHTML = '<span class="text-danger">Error consultando</span>';
+        });
+
+});
+
+
+</script>
+@endpush
+
+<!-- MODAL SOPORTE -->
+<div class="modal fade" id="soporteModal" tabindex="-1">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content rounded-4">
+
+            <div class="modal-header">
+                <h5 class="modal-title">Visualización de soporte</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body text-center">
+
+                <!-- IMAGE -->
+                <img id="soporteModalImg"
+                     class="img-fluid rounded-4 d-none"
+                     style="max-height: 80vh;">
+
+                <!-- PDF -->
+                <iframe id="soporteModalPdf"
+                        class="w-100 d-none"
+                        style="height:80vh;"
+                        frameborder="0"></iframe>
+
+            </div>
+
+        </div>
+    </div>
+</div>
 @endsection

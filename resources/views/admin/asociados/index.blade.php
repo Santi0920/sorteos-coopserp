@@ -1,187 +1,247 @@
 @extends('layouts.admin')
 
-@section('content')
 @php
-    $title = 'Visualización de Asociados';
-    $subtitle = 'Administra y revisa los asociados registrados en el sistema, así como sus créditos relacionados.';
+    $title = 'Gestión de Asociados';
+    $subtitle = 'Consulta y administra asociados vinculados a sorteos.';
 @endphp
-<div class="container py-4">
 
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h3 class="fw-bold mb-0">Asociados</h3>
+@section('content')
+
+<div class="row g-4 mb-4">
+
+    <div class="col-lg-4">
+        <div class="stats-box">
+            <p>Total asociados</p>
+            <h3>{{ $asociados->total() }}</h3>
+        </div>
     </div>
 
-    <div class="card border-0 shadow-sm rounded-4">
-        <div class="card-body">
+</div>
+
+<div class="content-card card">
+
+    <div class="card-header d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+
+        <div>
+            <h5 class="mb-1 fw-bold">
+                Listado de asociados
+            </h5>
+
+            <small class="text-muted">
+                Consulta asociados vinculados a sorteos.
+            </small>
+        </div>
+
+        <form method="GET"
+              action="{{ route('admin.asociados.index') }}"
+              class="row g-2 align-items-center">
+
+            <!-- SORTEO -->
+            <div class="col-auto">
+
+                <select
+                    name="sorteo_id"
+                    class="form-select"
+                    onchange="this.form.submit()"
+                >
+
+                    <!-- <option value="">
+                        Todos los sorteos
+                    </option> -->
+
+                    @foreach($sorteos as $s)
+
+                        <option value="{{ $s->id }}"
+                            {{ request('sorteo_id') == $s->id ? 'selected' : '' }}>
+
+                            {{ $s->nombre }}
+
+                        </option>
+
+                    @endforeach
+
+                </select>
+
+            </div>
+
+            <!-- SEARCH -->
+            <div class="col-auto">
+
+                <input
+                    type="text"
+                    name="search"
+                    value="{{ $search }}"
+                    class="form-control"
+                    placeholder="Buscar asociado"
+                    style="min-width: 280px;"
+                >
+
+            </div>
+
+            <!-- PAGINACIÓN -->
+            <div class="col-auto">
+
+                <select
+                    name="per_page"
+                    class="form-select"
+                    onchange="this.form.submit()"
+                >
+
+                    <option value="10"  {{ (int)$perPage === 10 ? 'selected' : '' }}>10</option>
+                    <option value="25"  {{ (int)$perPage === 25 ? 'selected' : '' }}>25</option>
+                    <option value="50"  {{ (int)$perPage === 50 ? 'selected' : '' }}>50</option>
+                    <option value="100" {{ (int)$perPage === 100 ? 'selected' : '' }}>100</option>
+
+                </select>
+
+            </div>
+
+            <!-- BTN -->
+            <div class="col-auto">
+
+                <button class="btn btn-outline-primary">
+
+                    <i class="bi bi-search"></i>
+
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+    <div class="card-body">
+
+        @if($asociados->count())
 
             <div class="table-responsive">
-                <table class="table align-middle mb-0">
-                    <thead class="table-light">
+
+                <table class="table align-middle">
+
+                    <thead>
                         <tr>
-                            <th>#</th>
-                            <th>Cedula</th>
+                            <th>ID</th>
+                            <th>Cédula</th>
                             <th>Nombre</th>
                             <th>Email</th>
                             <th>Agencia</th>
                             <th>Cuenta</th>
-                            <th>Nomina</th>
-                            <th>Ver</th>
+                            <th>Nómina</th>
+                            <th>Estado</th>
                         </tr>
                     </thead>
 
                     <tbody>
-                        @forelse($asociados as $asociado)
-                            <tr>
-                                <td class="fw-bold">
-                                    {{ $asociado->id }}
-                                </td>
-                                <td>{{ $asociado->documento }}</td>
 
-                                <td>{{ $asociado->nombre_completo }}</td>
+                    @foreach($asociados as $asociado)
 
-                                <td>{{ $asociado->email }}</td>
+                        <tr>
 
-                                <td>{{ $asociado->agencia ?? '-' }}</td>
+                            <td>
+                                {{ $asociado->id }}
+                            </td>
 
-                                <td>{{ $asociado->cuenta ?? '-' }}</td>
+                            <td>
+                                {{ $asociado->documento }}
+                            </td>
 
-                                <td>{{ $asociado->nomina ?? '-' }}</td>
+                            <td>
 
-                                <td>
-                                    <button 
-                                        class="btn btn-sm px-3 d-flex align-items-center gap-2"
-                                        style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; border-radius: 20px; color: white; font-weight: 500; box-shadow: 0 2px 8px rgba(102,126,234,0.4); transition: all 0.2s ease;"
-                                        onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 12px rgba(102,126,234,0.6)'"
-                                        onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(102,126,234,0.4)'"
-                                        onclick="verCreditos('{{ route('admin.asociados.creditos', $asociado->id) }}', '{{ $asociado->nombre_completo }}')"
-                                    >
-                                        <i class="bi bi-credit-card-2-front"></i>
-                                        <span>{{ $asociado->creditos_count }} crédito{{ $asociado->creditos_count !== 1 ? 's' : '' }}</span>
-                                        <span style="opacity: 0.7;">|</span>
-                                        <span style="font-size: 0.8rem; opacity: 0.9;">Ver</span>
-                                    </button>
-                                </td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="4" class="text-center text-muted">
-                                    No hay asociados registrados
-                                </td>
-                            </tr>
-                        @endforelse
+                                <div class="fw-semibold">
+
+                                    {{ $asociado->nombre_completo }}
+
+                                </div>
+
+                            </td>
+
+                            <td>
+                                {{ $asociado->email ?: '—' }}
+                            </td>
+
+                            <td>
+                                {{ $asociado->agencia ?: '—' }}
+                            </td>
+
+                            <td>
+                                {{ $asociado->cuenta ?: '—' }}
+                            </td>
+
+                            <td>
+                                {{ $asociado->nomina ?: '—' }}
+                            </td>
+
+                            <td>
+
+                                @if($asociado->activo)
+
+                                    <span class="badge bg-success-subtle text-success rounded-pill px-3 py-2">
+                                        Activo
+                                    </span>
+
+                                @else
+
+                                    <span class="badge bg-danger-subtle text-danger rounded-pill px-3 py-2">
+                                        Inactivo
+                                    </span>
+
+                                @endif
+
+                            </td>
+
+                        </tr>
+
+                    @endforeach
+
                     </tbody>
+
                 </table>
+
             </div>
 
-            <div class="mt-3">
-                {{ $asociados->links() }}
-            </div>
+            <div class="d-flex justify-content-between align-items-center mt-4 flex-wrap gap-2">
 
-        </div>
-    </div>
+                <div class="text-muted small">
 
-</div>
+                    Mostrando
+                    {{ $asociados->firstItem() }}
+                    a
+                    {{ $asociados->lastItem() }}
+                    de
+                    {{ $asociados->total() }}
+                    registros
 
-
-<!-- MODAL -->
-<div class="modal fade" id="creditosModal" tabindex="-1">
-    <div class="modal-dialog modal-lg modal-dialog-scrollable">
-        <div class="modal-content rounded-4 border-0">
-
-            <div class="modal-header">
-                <h5 class="modal-title fw-bold" id="modalTitle">Créditos</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-
-            <div class="modal-body">
-
-                <div id="loading" class="text-center py-4">
-                    <div class="spinner-border text-primary"></div>
-                    <p class="mt-2 text-muted">Cargando créditos...</p>
                 </div>
 
-                <div id="creditosContent" class="d-none">
+                <div>
 
-                    <table class="table align-middle">
-                        <thead>
-                            <tr>
-                                <th># Crédito</th>
-                                <th>Línea</th>
-                                <th>Monto</th>
-                                <th>Fecha</th>
-                            </tr>
-                        </thead>
-
-                        <tbody id="tablaCreditos"></tbody>
-                    </table>
+                    {{ $asociados->links() }}
 
                 </div>
 
             </div>
 
-        </div>
+        @else
+
+            <div class="text-center py-5">
+
+                <i class="bi bi-people fs-1 text-muted"></i>
+
+                <h5 class="mt-3 fw-bold">
+                    No hay asociados
+                </h5>
+
+                <p class="text-muted">
+                    No existen asociados vinculados al sorteo seleccionado.
+                </p>
+
+            </div>
+
+        @endif
+
     </div>
+
 </div>
 
 @endsection
-
-
-@push('scripts')
-<script>
-function verCreditos(url, nombre) {
-
-    const modal = new bootstrap.Modal(document.getElementById('creditosModal'));
-
-    document.getElementById('modalTitle').innerText = 'Créditos de ' + nombre;
-
-    document.getElementById('loading').classList.remove('d-none');
-    document.getElementById('creditosContent').classList.add('d-none');
-
-    modal.show();
-
-    fetch(url, {
-        headers: {
-            'Accept': 'application/json'
-        }
-    })
-    .then(res => res.json())
-    .then(data => {
-
-        let html = '';
-
-        if (!data.length) {
-            html = `<tr><td colspan="4" class="text-center text-muted">Sin créditos</td></tr>`;
-        } else {
-
-            data.forEach(c => {
-                html += `
-                    <tr>
-                        <td><strong>#${c.numero_credito}</strong></td>
-                        <td>${c.linea ?? '—'}</td>
-                        <td>$${Number(c.monto).toLocaleString()}</td>
-                        <td>${c.fecha_desembolso ?? '-'}</td>
-                    </tr>
-                `;
-            });
-        }
-
-        document.getElementById('tablaCreditos').innerHTML = html;
-
-        document.getElementById('loading').classList.add('d-none');
-        document.getElementById('creditosContent').classList.remove('d-none');
-
-    })
-    .catch(err => {
-        console.error(err);
-
-        document.getElementById('tablaCreditos').innerHTML = `
-            <tr>
-                <td colspan="4" class="text-danger text-center">
-                    Error cargando créditos
-                </td>
-            </tr>
-        `;
-    });
-}
-</script>
-@endpush

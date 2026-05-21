@@ -1,7 +1,7 @@
 @extends('layouts.admin')
 
 @php
-    $title = 'Dashboard';
+    $title = 'Dashboard General - Todos Sorteos';
     $subtitle = 'Panel inteligente del sistema de sorteos.';
 @endphp
 
@@ -17,34 +17,7 @@
         </div>
     </div>
 
-    <div class="col-lg-3">
-        <div class="content-card card h-100">
-            <div class="card-body">
-                <div class="text-muted small mb-2">Boletas pendientes</div>
-                <h3 class="fw-bold text-danger">
-                    {{ number_format($boletasPendientes) }}
-                </h3>
-                <small class="text-muted">
-                    Faltan por asignar
-                </small>
-            </div>
-        </div>
-    </div>
 
-    <div class="col-lg-3">
-        <div class="content-card card h-100">
-            <div class="card-body">
-                <div class="text-muted small mb-2">Ocupación</div>
-                <h3 class="fw-bold">{{ $porcentajeOcupacion }}%</h3>
-
-                <div class="progress mt-2" style="height: 8px;">
-                    <div class="progress-bar bg-success"
-                         style="width: {{ $porcentajeOcupacion }}%">
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
 
     <div class="col-lg-3">
         <div class="content-card card h-100">
@@ -77,20 +50,28 @@
     <div class="col-lg-5">
         <div class="content-card card h-100">
             <div class="card-header">
-                <h5 class="fw-bold mb-1">Top asociados</h5>
+                <h5 class="fw-bold mb-1">Top 10 Participantes (Boletas)</h5>
             </div>
 
             <div class="card-body">
                 @forelse($rankingAsociados as $index => $item)
+
                     <div class="d-flex justify-content-between mb-3">
+
                         <div>
                             <strong>#{{ $index + 1 }}</strong>
+
                             {{ $item->asociado->nombre_completo ?? '—' }}
+
+                            <b>({{ $item->sorteo->nombre ?? 'Sin sorteo' }})</b>
                         </div>
+
                         <span class="badge bg-primary">
                             {{ $item->total }}
                         </span>
+
                     </div>
+
                 @empty
                     <p class="text-muted">Sin datos</p>
                 @endforelse

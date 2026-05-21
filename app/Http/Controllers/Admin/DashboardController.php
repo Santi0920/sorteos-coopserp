@@ -43,10 +43,14 @@ class DashboardController extends Controller
             ->get();
 
         // 🏆 RANKING
-        $rankingAsociados = Boleta::select('asociado_id', DB::raw('COUNT(*) as total'))
-            ->groupBy('asociado_id')
+        $rankingAsociados = Boleta::select(
+                'asociado_id',
+                'sorteo_id',
+                DB::raw('COUNT(*) as total')
+            )
+            ->groupBy('asociado_id', 'sorteo_id')
             ->orderByDesc('total')
-            ->with('asociado')
+            ->with(['asociado', 'sorteo'])
             ->take(10)
             ->get();
 

@@ -12,9 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('asociados', function (Blueprint $table) {
-            $table->string('cuenta')->nullable();
-            $table->string('agencia')->nullable();
-            $table->string('nomina')->nullable();
+            $table->timestamp('consentimiento_datos_at')->nullable();
         });
     }
 

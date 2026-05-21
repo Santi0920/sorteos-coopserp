@@ -2,7 +2,7 @@
 
 @php
     $title = 'Gestión de Sorteos';
-    $subtitle = 'Administra las fechas, loterías, estados y reprogramaciones.';
+    $subtitle = 'Administra sorteos, participantes y boletas desde un solo lugar.';
 @endphp
 
 @section('topbar_actions')
@@ -12,120 +12,195 @@
 @endsection
 
 @section('content')
-    <div class="row g-4 mb-4">
-        <div class="col-md-4">
-            <div class="stats-box">
-                <p>Total sorteos</p>
-                <h3>{{ $sorteos->total() }}</h3>
-            </div>
+
+<div class="row g-4 mb-4">
+
+    <div class="col-md-4">
+        <div class="stats-box">
+            <p>Total sorteos</p>
+            <h3>{{ $sorteos->total() }}</h3>
+            <small class="text-white">Registrados en el sistema</small>
         </div>
     </div>
 
-    <div class="content-card card">
-        <div class="card-header d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
-            <div>
-                <h5 class="mb-1 fw-bold">Listado de sorteos</h5>
-                <small class="text-muted">Consulta y administra todos los sorteos registrados.</small>
-            </div>
+    <div class="col-md-4">
+        <div class="stats-box">
+            <p>Último sorteo creado</p>
+            <h3>{{ $sorteos->sortByDesc('created_at')->first()->nombre ?? '—' }}</h3>
+            <small class="text-white">
+                {{ optional($sorteos->sortByDesc('created_at')->first())->fecha_sorteo?->format('d/m/Y') }}
+            </small>
+        </div>
+    </div>
 
-            <form method="GET" action="{{ route('admin.sorteos.index') }}" class="d-flex gap-2">
-                <input
-                    type="text"
-                    name="search"
-                    value="{{ $search }}"
-                    class="form-control"
-                    placeholder="Buscar por nombre, lotería o estado"
-                    style="min-width: 280px;"
-                >
-                <button class="btn btn-outline-primary" type="submit">
-                    <i class="bi bi-search"></i>
-                </button>
-            </form>
+</div>
+
+<div class="content-card card">
+
+    <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-3">
+
+        <div>
+            <h5 class="mb-1 fw-bold">Sorteos del sistema</h5>
+            <small class="text-muted">Accede a participantes, importación y boletas desde cada sorteo</small>
         </div>
 
-        <div class="card-body">
-            @if($sorteos->count())
-                <div class="table-responsive">
-                    <table class="table align-middle">
-                        <thead>
+        <form method="GET" action="{{ route('admin.sorteos.index') }}" class="d-flex gap-2">
+            <input type="text"
+                   name="search"
+                   value="{{ $search }}"
+                   class="form-control"
+                   placeholder="Buscar sorteo..."
+                   style="min-width: 250px;">
+            <button class="btn btn-outline-primary">
+                <i class="bi bi-search"></i>
+            </button>
+        </form>
+
+    </div>
+
+    <div class="card-body">
+
+        @if($sorteos->count())
+
+            <div class="table-responsive">
+
+                <table class="table align-middle">
+
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Sorteo</th>
+                            <th>Fecha</th>
+                            <th>Lotería</th>
+                            <th>Estado</th>
+                            <th>Boletas</th>
+                            <th class="text-end">Acciones</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        @foreach($sorteos as $sorteo)
+
                             <tr>
-                                <th>ID</th>
-                                <th>Nombre</th>
-                                <th>Fecha</th>
-                                <th>Lotería</th>
-                                <th>Estado</th>
-                                <th>Reprogramado</th>
-                                <th class="text-end">Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach($sorteos as $sorteo)
-                                <tr>
-                                    <td>{{ $sorteo->id }}</td>
-                                    <td>
-                                        <div class="fw-semibold">{{ $sorteo->nombre }}</div>
-                                        @if($sorteo->observaciones)
-                                            <small class="text-muted">{{ \Illuminate\Support\Str::limit($sorteo->observaciones, 60) }}</small>
-                                        @endif
-                                    </td>
-                                    <td>{{ $sorteo->fecha_sorteo->format('d/m/Y') }}</td>
-                                    <td>{{ $sorteo->loteria ?: '—' }}</td>
-                                    <td>
-                                        @php
-                                            $badgeClass = match($sorteo->estado) {
-                                                'programado' => 'badge-programado',
-                                                'ejecutado' => 'badge-ejecutado',
-                                                'cancelado' => 'badge-cancelado',
-                                                default => 'bg-secondary'
-                                            };
-                                        @endphp
-                                        <span class="badge-soft {{ $badgeClass }}">
-                                            {{ ucfirst($sorteo->estado) }}
-                                        </span>
-                                    </td>
-                                    <td>
-                                        @if($sorteo->es_reprogramado)
-                                            <span class="badge bg-warning-subtle text-dark rounded-pill px-3 py-2">Sí</span>
-                                        @else
-                                            <span class="badge bg-light text-dark rounded-pill px-3 py-2">No</span>
-                                        @endif
-                                    </td>
-                                    <td class="text-end">
-                                        <div class="d-inline-flex gap-2">
-                                            <a href="{{ route('admin.sorteos.show', $sorteo) }}" class="btn btn-sm btn-light">
-                                                <i class="bi bi-eye"></i>
-                                            </a>
-                                            <a href="{{ route('admin.sorteos.edit', $sorteo) }}" class="btn btn-sm btn-outline-primary">
-                                                <i class="bi bi-pencil-square"></i>
-                                            </a>
-                                            <form action="{{ route('admin.sorteos.destroy', $sorteo) }}" method="POST" onsubmit="return confirm('¿Seguro que deseas eliminar este sorteo?')">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="btn btn-sm btn-outline-danger">
-                                                    <i class="bi bi-trash"></i>
-                                                </button>
-                                            </form>
-                                        </div>
-                                    </td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
 
-                <div class="mt-4">
-                    {{ $sorteos->links() }}
-                </div>
-            @else
-                <div class="text-center py-5">
-                    <i class="bi bi-calendar2-x fs-1 text-muted"></i>
-                    <h5 class="mt-3 fw-bold">No hay sorteos registrados</h5>
-                    <p class="text-muted">Empieza creando tu primer sorteo.</p>
-                    <a href="{{ route('admin.sorteos.create') }}" class="btn btn-primary">
-                        Crear sorteo
-                    </a>
-                </div>
-            @endif
-        </div>
+                                <td class="fw-bold">{{ $sorteo->id }}</td>
+
+                                <td>
+                                    <div class="fw-semibold">{{ $sorteo->nombre }}</div>
+                                    <small class="text-muted">
+                                        {{ \Illuminate\Support\Str::limit($sorteo->observaciones, 50) }}
+                                    </small>
+                                </td>
+
+                                <td>{{ $sorteo->fecha_sorteo->format('d/m/Y') }}</td>
+
+                                <td>{{ $sorteo->loteria ?? '—' }}</td>
+
+                                <td>
+                                    <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-2">
+                                        {{ ucfirst($sorteo->estado) }}
+                                    </span>
+                                </td>
+
+                                <td>
+                                    <span class="badge bg-dark-subtle text-dark rounded-pill px-3 py-2">
+                                        {{ \App\Models\Boleta::where('sorteo_id', $sorteo->id)->count() }} boletas
+                                    </span>
+                                </td>
+
+                                <!-- ACCIONES PRO -->
+                                <td class="text-end">
+
+                                    <div class="d-flex justify-content-end flex-wrap gap-2">
+
+                                        <!-- EDITAR SORTEO -->
+                                        <a href="{{ route('admin.sorteos.edit', $sorteo->id) }}"
+                                        class="btn btn-sm btn-outline-primary">
+                                            <i class="bi bi-pencil-square"></i>
+                                            Editar
+                                        </a>
+
+                                        <!-- IMPORTAR -->
+                                        <a href="{{ route('admin.sorteos.import.form', $sorteo->id) }}"
+                                        class="btn btn-sm btn-success">
+                                            <i class="bi bi-cloud-arrow-up"></i>
+                                            Importar
+                                        </a>
+
+                                        <!-- DISEÑO BOLETA -->
+                                        <a href="{{ route('admin.boleta.design.edit', $sorteo->id) }}"
+                                        class="btn btn-sm btn-outline-secondary">
+                                            <i class="bi bi-palette"></i>
+                                            Diseño
+                                        </a>
+
+                                        <!-- PARTICIPANTES -->
+                                        <a href="{{ route('admin.asociados.index', ['sorteo_id' => $sorteo->id]) }}"
+                                        class="btn btn-sm btn-outline-primary">
+                                            <i class="bi bi-people"></i>
+                                            Participantes
+                                        </a>
+
+                                        <!-- BOLETAS -->
+                                        <a href="{{ route('admin.boletas.index', ['sorteo_id' => $sorteo->id]) }}"
+                                        class="btn btn-sm btn-outline-dark">
+                                            <i class="bi bi-ticket-perforated"></i>
+                                            Boletas
+                                        </a>
+
+                                        <!-- MAPA -->
+                                        <a href="{{ route('admin.boletas.mapa', $sorteo->id) }}"
+                                        class="btn btn-sm btn-warning">
+                                            <i class="bi bi-grid-3x3-gap"></i>
+                                            Mapa
+                                        </a>
+
+                                    </div>
+
+                                </td>
+
+                            </tr>
+
+                        @endforeach
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center mt-4">
+
+                <small class="text-muted">
+                    Mostrando {{ $sorteos->firstItem() }} a {{ $sorteos->lastItem() }}
+                    de {{ $sorteos->total() }}
+                </small>
+
+                {{ $sorteos->links() }}
+
+            </div>
+
+        @else
+
+            <div class="text-center py-5">
+
+                <i class="bi bi-calendar-x fs-1 text-muted"></i>
+
+                <h5 class="mt-3 fw-bold">No hay sorteos</h5>
+
+                <p class="text-muted">Crea tu primer sorteo para comenzar</p>
+
+                <a href="{{ route('admin.sorteos.create') }}" class="btn btn-primary">
+                    Crear sorteo
+                </a>
+
+            </div>
+
+        @endif
+
     </div>
+
+</div>
+
 @endsection

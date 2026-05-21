@@ -4,11 +4,8 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Boleta;
-use App\Models\Credito;
 use App\Models\Sorteo;
-use App\Services\BoletaGeneratorService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 
 class BoletaController extends Controller
 {
@@ -16,79 +13,66 @@ class BoletaController extends Controller
     {
         $search = trim($request->get('search'));
         $perPage = (int) $request->get('per_page', 10);
+        $sorteoId = $request->get('sorteo_id');
 
         if (!in_array($perPage, [10, 25, 50, 100])) {
             $perPage = 10;
         }
 
-        $boletas = Boleta::with(['asociado', 'credito'])  // ← quitar 'sorteo'
-            ->when($search, function ($query) use ($search) {
-                $query->where(function ($q) use ($search) {
-                    $q->where('numero_boleta', 'like', "%{$search}%")
-                        ->orWhereHas('asociado', function ($sub) use ($search) {
-                            $sub->where('nombres', 'like', "%{$search}%")
-                                ->orWhere('apellidos', 'like', "%{$search}%")
-                                ->orWhere('documento', 'like', "%{$search}%");
-                        });
-                        // ← quitar el orWhereHas('sorteo')
-                });
+        $query = Boleta::with(['asociado', 'credito', 'sorteo']);
+
+        if ($sorteoId) {
+            $query->where('sorteo_id', $sorteoId);
+        }
+
+        $boletas = $query
+            ->when($search, function ($q) use ($search) {
+                $q->where('numero_boleta', 'like', "%{$search}%")
+                    ->orWhereHas('asociado', function ($sub) use ($search) {
+                        $sub->where('nombres', 'like', "%{$search}%")
+                            ->orWhere('apellidos', 'like', "%{$search}%")
+                            ->orWhere('documento', 'like', "%{$search}%");
+                    });
             })
             ->orderByDesc('id')
             ->paginate($perPage)
             ->withQueryString();
 
-        $topAsociado = Boleta::query()
-            ->select('asociado_id', DB::raw('COUNT(*) as total_boletas'))
+        $topAsociado = Boleta::selectRaw('asociado_id, COUNT(*) as total_boletas')
+            ->where('sorteo_id', $sorteoId) 
             ->with('asociado')
             ->groupBy('asociado_id')
             ->orderByDesc('total_boletas')
             ->first();
-
-        $totalMontoCreditos = Credito::query()
-            ->where('participa_sorteo', true)
-            ->whereHas('asociado', function ($q) {
-                $q->where('activo', true);
-            })
-            ->sum('monto');
+        $totalMontoCreditos = Boleta::sum('monto_base');
+        $sorteos = Sorteo::orderBy('fecha_sorteo', 'desc')->get();
 
         return view('admin.boletas.index', compact(
             'boletas',
             'search',
             'perPage',
+            'sorteos',
+            'sorteoId',
             'topAsociado',
             'totalMontoCreditos'
         ));
     }
 
-
-    public function generate(Request $request, BoletaGeneratorService $service)
+    public function generate(Request $request, \App\Services\BoletaGeneratorService $service)
     {
-        try {
-            $result = $service->generateForSorteo();
+        $request->validate([
+            'sorteo_id' => 'required|exists:sorteos,id'
+        ]);
 
-            $message = $result['message'];
+        $sorteo = \App\Models\Sorteo::findOrFail($request->sorteo_id);
 
-            if (isset($result['generated'])) {
-                $message .= ' Total nuevas: ' . $result['generated'] . '.';
-            }
+        $result = $service->generateForSorteo($sorteo);
 
-            if (isset($result['emails_sent'])) {
-                $message .= ' Correos enviados: ' . $result['emails_sent'] . '.';
-            }
-
-            if (isset($result['emails_failed'])) {
-                $message .= ' Correos fallidos: ' . $result['emails_failed'] . '.';
-            }
-
-            return redirect()
-                ->route('admin.boletas.index')
-                ->with($result['success'] ? 'success' : 'error', $message);
-
-        } catch (\Throwable $e) {
-            return redirect()
-                ->route('admin.boletas.index')
-                ->with('error', 'Error al generar boletas: ' . $e->getMessage());
+        if ($result['success']) {
+            return back()->with('success', $result['message']);
         }
+
+        return back()->with('error', $result['message']);
     }
 
     public function destroyBySorteo(Sorteo $sorteo)
@@ -96,15 +80,11 @@ class BoletaController extends Controller
         $count = $sorteo->boletas()->count();
 
         if ($count === 0) {
-            return redirect()
-                ->route('admin.boletas.index')
-                ->with('error', 'Ese sorteo no tiene boletas generadas.');
+            return back()->with('error', 'No hay boletas.');
         }
 
         $sorteo->boletas()->delete();
 
-        return redirect()
-            ->route('admin.boletas.index')
-            ->with('success', "Se eliminaron {$count} boletas del sorteo {$sorteo->nombre}.");
+        return back()->with('success', "Se eliminaron {$count} boletas.");
     }
 }

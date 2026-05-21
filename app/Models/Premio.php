@@ -12,12 +12,19 @@ class Premio extends Model
     protected $table = 'premios';
 
     protected $fillable = [
+
         'sorteo_id',
+
         'boleta_ganadora_id',
+
         'titulo',
+
         'descripcion',
+
         'imagen',
+
         'orden',
+
         'activo',
     ];
 
@@ -32,6 +39,9 @@ class Premio extends Model
 
     public function boletaGanadora()
     {
-        return $this->belongsTo(Boleta::class, 'boleta_ganadora_id');
+        return $this->belongsTo(
+            Boleta::class,
+            'boleta_ganadora_id'
+        );
     }
 }

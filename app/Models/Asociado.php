@@ -23,6 +23,7 @@ class Asociado extends Model
         'cuenta', 
         'agencia', 
         'nomina', 
+        'consentimiento_datos_at'
     ];
 
     protected $casts = [
@@ -42,5 +43,15 @@ class Asociado extends Model
     public function getNombreCompletoAttribute()
     {
         return trim(($this->nombres ?? '') . ' ' . ($this->apellidos ?? ''));
+    }
+
+    public function sorteos()
+    {
+        return $this->belongsToMany(
+            Sorteo::class,
+            'sorteo_asociado',
+            'asociado_id',
+            'sorteo_id'
+        )->withTimestamps();
     }
 }

@@ -6,16 +6,19 @@
 @endphp
 
 @section('topbar_actions')
-    <a href="{{ route('admin.boletas.mapa') }}"
-    class="btn btn-warning fw-bold me-2 fs-5">
+    <button class="btn btn-warning fw-bold me-2"
+            data-bs-toggle="modal"
+            data-bs-target="#mapaModal">
         <i class="bi bi-grid-3x3-gap"></i> Ver mapa
-    </a>
+    </button>
+
     <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#generarBoletasModal">
         <i class="bi bi-magic me-1"></i> Generar boletas
     </button>
 @endsection
 
 @section('content')
+
     <div class="row g-4 mb-4">
         <div class="col-lg-4">
             <div class="stats-box">
@@ -71,15 +74,24 @@
             </div>
 
             <form method="GET" action="{{ route('admin.boletas.index') }}" class="row g-2 align-items-center">
+
                 <div class="col-auto">
-                    <input
-                        type="text"
-                        name="search"
-                        value="{{ $search }}"
-                        class="form-control"
-                        placeholder="Buscar boleta o asociado"
-                        style="min-width: 280px;"
-                    >
+                    <select name="sorteo_id" class="form-select" onchange="this.form.submit()">
+                        @foreach($sorteos as $s)
+                            <option value="{{ $s->id }}" {{ request('sorteo_id') == $s->id ? 'selected' : '' }}>
+                                {{ $s->nombre }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div class="col-auto">
+                    <input type="text"
+                           name="search"
+                           value="{{ $search }}"
+                           class="form-control"
+                           placeholder="Buscar boleta o asociado"
+                           style="min-width: 280px;">
                 </div>
 
                 <div class="col-auto">
@@ -96,6 +108,7 @@
                         <i class="bi bi-search"></i>
                     </button>
                 </div>
+
             </form>
         </div>
 
@@ -104,44 +117,54 @@
                 <div class="table-responsive">
                     <table class="table align-middle">
                         <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Número</th>
-                                <th>Asociado</th>
-                                <th>Documento</th>
-                                <th>Crédito</th>
-                                <th>Monto base</th>
-                                <th>Ganadora</th>
-                                <th class="text-end">Acciones</th>
-                            </tr>
+                        <tr>
+                            <th>ID</th>
+                            <th>Número</th>
+                            <th>Asociado</th>
+                            <th>Documento</th>
+                            <th>Ganadora</th>
+                            <th class="text-end">Acciones</th>
+                        </tr>
                         </thead>
+
                         <tbody>
-                            @foreach($boletas as $boleta)
-                                <tr>
-                                    <td>{{ $boleta->id }}</td>
-                                    <td>
-                                        <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-2">
-                                            {{ $boleta->numero_boleta }}
-                                        </span>
-                                    </td>
-                                    <td>{{ $boleta->asociado?->nombre_completo ?? '—' }}</td>
-                                    <td>{{ $boleta->asociado?->documento ?? '—' }}</td>
-                                    <td>{{ $boleta->credito?->numero_credito ?? '—' }}</td>
-                                    <td>${{ number_format((float)$boleta->monto_base, 0, ',', '.') }}</td>
-                                    <td>
-                                        @if($boleta->ganadora)
-                                            <span class="badge bg-success-subtle text-success rounded-pill px-3 py-2">Sí</span>
-                                        @else
-                                            <span class="badge bg-light text-dark rounded-pill px-3 py-2">No</span>
-                                        @endif
-                                    </td>
-                                    <td class="text-end">
-                                        <a href="{{ route('admin.boletas.pdf', $boleta) }}" class="btn btn-sm btn-outline-danger">
-                                            <i class="bi bi-file-earmark-pdf"></i>
-                                        </a>
-                                    </td>
-                                </tr>
-                            @endforeach
+                        @foreach($boletas as $boleta)
+                            <tr>
+                                <td>{{ $boleta->id }}</td>
+
+                                @php
+                                    $maxDigits = strlen((string) $boleta->sorteo->numero_fin);
+                                @endphp
+
+                                <td>
+                                    <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-2">
+                                        {{ str_pad($boleta->numero_boleta, $maxDigits, '0', STR_PAD_LEFT) }}
+                                    </span>
+                                </td>
+
+                                <td>{{ $boleta->asociado?->nombre_completo ?? '—' }}</td>
+                                <td>{{ $boleta->asociado?->documento ?? '—' }}</td>
+
+                                <td>
+                                    @if($boleta->ganadora)
+                                        <span class="badge bg-success-subtle text-success rounded-pill px-3 py-2">Sí</span>
+                                    @else
+                                        <span class="badge bg-light text-dark rounded-pill px-3 py-2">No</span>
+                                    @endif
+                                </td>
+
+                                <td class="text-end">
+                                    <button
+                                        class="btn btn-sm btn-outline-danger abrirPdf"
+                                        data-url="{{ route('admin.boletas.pdf', $boleta) }}"
+                                    >
+
+                                        <i class="bi bi-file-earmark-pdf"></i>
+
+                                    </button>
+                                </td>
+                            </tr>
+                        @endforeach
                         </tbody>
                     </table>
                 </div>
@@ -165,100 +188,240 @@
     </div>
 
     <!-- MODAL GENERAR BOLETAS -->
-    <div class="modal fade" id="generarBoletasModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal fade" id="generarBoletasModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content rounded-4 border-0 shadow">
+
                 <div class="modal-header">
                     <h5 class="modal-title">Generar boletas</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar" id="cerrarGenerarBoletasBtn"></button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
 
                 <form action="{{ route('admin.boletas.generate') }}" method="POST" id="generarBoletasForm">
                     @csrf
 
-                    <div class="modal-body">
+                    <div class="modal-body" id="generarBoletasCampos">
 
-                        <!-- CAMPOS NORMALES -->
-                        <div id="generarBoletasCampos">
-                            <div class="alert alert-warning rounded-4 mb-0">
-                                <i class="bi bi-info-circle me-2"></i>
-                                Puedes generar boletas varias veces. El sistema solo agregará nuevas boletas a los créditos que todavía no tengan las que les corresponden.
-                            </div>
+                        <div class="mb-3">
+                            <label class="form-label">Sorteo</label>
+
+                            <select name="sorteo_id" class="form-select" required>
+                                <option value="" disabled selected>Selecciona un sorteo</option>
+
+                                @foreach($sorteos as $sorteo)
+                                    <option value="{{ $sorteo->id }}">
+                                        {{ $sorteo->nombre }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <div class="alert alert-warning small">
+                            <strong>Importante:</strong> Al generar las boletas, el proceso es <b>irreversible</b>.
+                            Asegúrate de haber subido el archivo Excel completo antes de continuar.
+                            Una vez generadas y asignadas las boletas, el sistema no permitirá regenerarlas.
                         </div>
 
                         <!-- PROGRESO -->
                         <div id="generarBoletasProgreso" class="d-none text-center py-3">
-                            <div class="spinner-border text-primary mb-4" style="width: 3rem; height: 3rem;" role="status"></div>
+                            <div class="spinner-border text-primary mb-4" style="width: 3rem; height: 3rem;"></div>
 
                             <h5 class="fw-bold mb-2">Procesando generación</h5>
                             <p class="text-muted mb-4" id="textoProgresoBoletas">Iniciando...</p>
 
                             <div class="progress rounded-pill" style="height: 10px;">
                                 <div id="barraProgresoBoletas"
-                                    class="progress-bar progress-bar-striped progress-bar-animated bg-primary"
-                                    role="progressbar"
-                                    style="width: 5%; transition: width 0.8s ease;">
+                                     class="progress-bar progress-bar-striped progress-bar-animated"
+                                     style="width: 5%;">
                                 </div>
                             </div>
                         </div>
+
                     </div>
 
                     <div class="modal-footer" id="generarBoletasFooter">
                         <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn btn-primary" id="btnSubmitGenerarBoletas">
+                        <button type="button" class="btn btn-primary" id="btnConfirmarGeneracion">
                             <i class="bi bi-magic me-1"></i> Generar
                         </button>
                     </div>
                 </form>
+
             </div>
         </div>
     </div>
 
+    <!-- MODAL CONFIRMACIÓN -->
+    <div class="modal fade" id="confirmarGeneracionModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content rounded-4 border-0 shadow">
+
+                <div class="modal-header">
+                    <h5 class="modal-title text-danger">Confirmación requerida</h5>
+                    <button class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body">
+                    <p class="fw-semibold">
+                        Estás a punto de generar las boletas del sorteo.
+                    </p>
+
+                    <p class="text-muted">
+                        ⚠️ Este proceso es <b>irreversible</b>.<br>
+                        - No podrás volver a generar boletas para este sorteo.<br>
+                        - Asegúrate de haber cargado correctamente el archivo Excel completo.<br>
+                        - Una vez asignadas, el sistema no permitirá modificaciones.
+                    </p>
+                </div>
+
+                <div class="modal-footer">
+                    <button class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+                    <button class="btn btn-danger" id="btnConfirmarFinal">
+                        Sí, generar definitivamente
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+<!-- MODAL PREVIEW PDF -->
+
+<div
+    class="modal fade"
+    id="pdfPreviewModal"
+    tabindex="-1"
+>
+
+    <div class="modal-dialog modal-xl">
+
+        <div class="modal-content">
+
+            <div class="modal-header">
+
+                <h5 class="modal-title">
+                    Vista previa boleta
+                </h5>
+
+                <button
+                    type="button"
+                    class="btn-close"
+                    data-bs-dismiss="modal"
+                ></button>
+
+            </div>
+
+            <div class="modal-body p-0">
+
+                <iframe
+                    id="pdfFrame"
+                    style="
+                        width:100%;
+                        height:80vh;
+                        border:none;
+                    "
+                ></iframe>
+
+            </div>
+
+            <div class="modal-footer">
+
+                <a
+                    id="btnDescargarPdf"
+                    class="btn btn-danger"
+                    target="_blank"
+                >
+                    Descargar PDF
+                </a>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
 @endsection
 
 @push('scripts')
 <script>
     document.addEventListener('DOMContentLoaded', function () {
-        const form      = document.getElementById('generarBoletasForm');
-        const campos    = document.getElementById('generarBoletasCampos');
-        const progreso  = document.getElementById('generarBoletasProgreso');
-        const footer    = document.getElementById('generarBoletasFooter');
-        const texto     = document.getElementById('textoProgresoBoletas');
-        const barra     = document.getElementById('barraProgresoBoletas');
-        const cerrarBtn = document.getElementById('cerrarGenerarBoletasBtn');
 
-        if (!form) return;
+        const form = document.getElementById('generarBoletasForm');
+        const btnOpenConfirm = document.getElementById('btnConfirmarGeneracion');
+        const btnFinal = document.getElementById('btnConfirmarFinal');
 
-        form.addEventListener('submit', function () {
+        const modalConfirm = new bootstrap.Modal(document.getElementById('confirmarGeneracionModal'));
+
+        const campos = document.getElementById('generarBoletasCampos');
+        const progreso = document.getElementById('generarBoletasProgreso');
+        const footer = document.getElementById('generarBoletasFooter');
+
+        const texto = document.getElementById('textoProgresoBoletas');
+        const barra = document.getElementById('barraProgresoBoletas');
+
+        // abrir confirmación
+        btnOpenConfirm.addEventListener('click', function () {
+            modalConfirm.show();
+        });
+
+        // confirmar final
+        btnFinal.addEventListener('click', function () {
+            modalConfirm.hide();
+
             campos.classList.add('d-none');
-            progreso.classList.remove('d-none');
             footer.classList.add('d-none');
+            progreso.classList.remove('d-none');
 
-            if (cerrarBtn) cerrarBtn.style.display = 'none';
-
-            texto.textContent = 'Calculando boletas por crédito...';
-            barra.style.width = '15%';
+            texto.textContent = 'Calculando boletas...';
+            barra.style.width = '20%';
 
             setTimeout(() => {
                 texto.textContent = 'Generando números únicos...';
-                barra.style.width = '35%';
-            }, 1000);
+                barra.style.width = '45%';
+            }, 1200);
 
             setTimeout(() => {
-                texto.textContent = 'Guardando boletas en la base de datos...';
-                barra.style.width = '55%';
+                texto.textContent = 'Guardando en base de datos...';
+                barra.style.width = '70%';
             }, 2500);
 
             setTimeout(() => {
-                texto.textContent = 'Enviando correos electrónicos a los asociados...';
-                barra.style.width = '75%';
+                texto.textContent = 'Finalizando proceso...';
+                barra.style.width = '95%';
             }, 4000);
 
-            setTimeout(() => {
-                texto.textContent = 'Finalizando proceso, por favor espera...';
-                barra.style.width = '92%';
-            }, 6000);
+            form.submit();
         });
+
+    });
+
+    document
+    .querySelectorAll('.abrirPdf')
+    .forEach(btn => {
+
+        btn.addEventListener('click', function(){
+
+            const url =
+                this.dataset.url;
+
+            document
+                .getElementById('pdfFrame')
+                .src = url;
+
+            document
+                .getElementById(
+                    'btnDescargarPdf'
+                )
+                .href = url;
+
+            new bootstrap.Modal(
+                document.getElementById(
+                    'pdfPreviewModal'
+                )
+            ).show();
+
+        });
+
     });
 </script>
 @endpush

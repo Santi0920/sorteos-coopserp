@@ -35,12 +35,5 @@ class InformeBoletasController extends Controller
         ));
     }
 
-    public function detalle()
-    {
-        $boletasAsignadas = \App\Models\Boleta::pluck('numero_boleta')
-            ->map(fn($n) => str_pad($n, 4, '0', STR_PAD_LEFT))
-            ->toArray();
 
-        return view('public.detalle-boletas', compact('boletasAsignadas'));
-    }
 }

@@ -406,18 +406,6 @@
                         <i class="bi bi-speedometer2"></i>
                         <span>Dashboard</span>
                     </a>
-                    
-                    <a href="{{ route('admin.asociados.index') }}"
-                    class="nav-link {{ request()->routeIs('admin.asociados.*') ? 'active' : '' }}">
-                        <i class="bi bi-people"></i>
-                        <span>Asociados</span>
-                    </a>
-
-                    <a href="{{ route('admin.import.form') }}"
-                    class="nav-link {{ request()->routeIs('admin.import.*') ? 'active' : '' }}">
-                        <i class="bi bi-file-earmark-arrow-up"></i>
-                        <span>Importar CSV</span>
-                    </a>
 
                     <a href="{{ route('admin.sorteos.index') }}"
                     class="nav-link {{ request()->routeIs('admin.sorteos.*') ? 'active' : '' }}">
@@ -425,11 +413,15 @@
                         <span>Sorteos</span>
                     </a>
 
-                    <a href="{{ route('admin.lineas.index') }}"
-                    class="nav-link {{ request()->routeIs('admin.lineas.*') ? 'active' : '' }}">
-                        <i class="bi bi-diagram-3"></i>
-                        <span>Líneas</span>
-                    </a>
+                    <!-- <a href="{{ route('admin.asociados.index') }}"
+                    class="nav-link {{ request()->routeIs('admin.asociados.*') ? 'active' : '' }}">
+                        <i class="bi bi-people"></i>
+                        <span>Asociados</span>
+                    </a> -->
+
+       
+
+
 
                     <a href="{{ route('admin.premios.index') }}"
                     class="nav-link {{ request()->routeIs('admin.premios.*') ? 'active' : '' }}">
@@ -449,11 +441,13 @@
                         <span>Ganadores</span>
                     </a>
 
-                    <a href="{{ route('admin.configuracion.edit') }}"
-                    class="nav-link {{ request()->routeIs('admin.configuracion.*') ? 'active' : '' }}">
-                        <i class="bi bi-gear"></i>
-                        <span>Configuración</span>
+                    <a href="{{ route('admin.reportes.index') }}"
+                    class="nav-link {{ request()->routeIs('admin.reportes.*') ? 'active' : '' }}">
+                        <i class="bi bi-bar-chart-line"></i>
+                        <span>Reportes</span>
                     </a>
+
+
                 </nav>
             </div>
 
@@ -489,8 +483,11 @@
             <div class="topbar d-flex justify-content-between align-items-center">
                 <div>
                     <h1 class="page-title">{{ $title ?? 'Panel Administrativo' }}</h1>
-                    <p class="page-subtitle">{{ $subtitle ?? 'Administra y controla el sistema de sorteos.' }}</p>
+                    <p class="page-subtitle">{{ $subtitle ?? 'Administra y controla el sistema de sorteos.' }}</p>        
+
+        </a>
                 </div>
+                
                 <div>
                     @yield('topbar_actions')
                 </div>

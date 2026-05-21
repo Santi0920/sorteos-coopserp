@@ -90,7 +90,7 @@
         }
 
         .hero-title {
-            font-size: clamp(2.2rem, 4.6vw, 4.8rem);
+            font-size: clamp(2.2rem, 3.6vw, 4.8rem);
             font-weight: 800;
             line-height: 1.05;
             letter-spacing: -.04em;
@@ -443,52 +443,80 @@
         .landing-logo:hover {
             transform: scale(1.05);
         }
+        .logo-responsive {
+    height: 44px;
+}
+
+
+
+    /* MOBILE */
+    @media (max-width: 767.98px) {
+        .logo-responsive {
+            height: 50px;
+            padding: 3px 6px !important;
+        }
+
+        .navbar-brand-text {
+            display: none !important;
+        }
+    }
     </style>
 </head>
 <body>
 
     <nav class="navbar navbar-expand-lg navbar-public">
         <div class="container py-3">
-            <a href="#" class="navbar-brand d-flex align-items-center gap-3 m-0 text-decoration-none">
-                <img 
-                    src="https://uiaf.gov.co/sites/default/files/styles/large/public/inline-images/coljuegos-logo_0.png"
-                    alt="Coljuegos"
-                    class="landing-logo"
-                    style="background: rgba(255,255,255,0.95); padding: 5px 10px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.2);"
-                >
-                <img 
-                    src="https://www.coopserp.com/wp/wp-content/uploads/2024/04/Logo-grande-Coopserp-2019-e1721607356635.png"
-                    alt="Coopserp"
-                    class="landing-logo"
-                >
-                <div class="navbar-brand-text">
+            <a href="#" class="navbar-brand d-flex align-items-center gap-2 m-0 text-decoration-none">
+
+                <!-- LOGOS -->
+                <div class="d-flex align-items-center gap-2">
+
+                    <button
+                        class="navbar-toggler border-0 shadow-none"
+                        type="button"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#navbarPublicContent"
+                        aria-controls="navbarPublicContent"
+                        aria-expanded="false"
+                        aria-label="Toggle navigation"
+                    >
+                        <span class="text-white fs-3">
+                            <i class="bi bi-list"></i>
+                        </span>
+                    </button>
+                    <img 
+                        src="https://uiaf.gov.co/sites/default/files/styles/large/public/inline-images/coljuegos-logo_0.png"
+                        alt="Coljuegos"
+                        class="landing-logo logo-responsive"
+                        style="background: rgba(255,255,255,0.95); padding: 4px 8px; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.2);"
+                    >
+
+                    <img 
+                        src="https://www.coopserp.com/wp/wp-content/uploads/2024/04/Logo-grande-Coopserp-2019-e1721607356635.png"
+                        alt="Coopserp"
+                        class="landing-logo logo-responsive"
+                    >
+
+                </div>
+
+                <!-- TEXTO -->
+                <div class="navbar-brand-text d-none d-md-block">
                     <div class="fw-bold text-white">Sorteos OFICIALES</div>
-                    <div style="font-size:.85rem; color:rgba(255,255,255,.55);">
+                    <div style="font-size:.8rem; color:rgba(255,255,255,.55);">
                         Premios, fechas y consulta de boletas
                     </div>
                 </div>
+
             </a>
 
-            <button
-                class="navbar-toggler border-0 shadow-none"
-                type="button"
-                data-bs-toggle="collapse"
-                data-bs-target="#navbarPublicContent"
-                aria-controls="navbarPublicContent"
-                aria-expanded="false"
-                aria-label="Toggle navigation"
-            >
-                <span class="text-white fs-3">
-                    <i class="bi bi-list"></i>
-                </span>
-            </button>
+
 
             <div class="collapse navbar-collapse mt-3 mt-lg-0" id="navbarPublicContent">
                 <div class="ms-auto d-flex flex-column flex-lg-row align-items-stretch align-items-lg-center gap-3">
                     <a href="#sorteos" class="nav-link-public">Sorteos</a>
                     <a href="#premios" class="nav-link-public">Premios</a>
                     <a href="{{ route('resultados.index') }}" class="nav-link-public">Resultados</a>
-                    <a href="{{ route('public.detalle') }}" class="nav-link-public">Mapa de Boletas</a>
+
                     <a href="{{ route('consulta.boletas.form') }}" class="btn btn-primary btn-premium">
                         <i class="bi bi-search me-1"></i> Consultar boletas
                     </a>
@@ -507,7 +535,7 @@
                         </span>
 
                         <h1 class="hero-title mb-3">
-                            {{ $textoPromocional }}
+                            Toda la información de tus sorteos en un solo lugar.
                         </h1>
 
                         <p class="hero-text mb-0">

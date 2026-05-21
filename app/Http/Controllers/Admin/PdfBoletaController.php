@@ -12,9 +12,15 @@ class PdfBoletaController extends Controller
 {
     public function generateFromBoleta(Boleta $boleta)
     {
-        $boleta->load(['asociado']);
+        $boleta->load([
+            'asociado',
+            'sorteo.design'
+        ]);
 
-        return $this->buildPdfAll($boleta->asociado);
+        return $this->buildPdfAll(
+            $boleta->asociado,
+            $boleta->id // 👈 clave: enviar boleta específica
+        );
     }
 
     public function publicDownload(string $token)
@@ -26,30 +32,55 @@ class PdfBoletaController extends Controller
         return $this->buildPdfAll($asociado);
     }
 
-    protected function buildPdfAll(Asociado $asociado)
-    {
-        $boletas = Boleta::where('asociado_id', $asociado->id)
-            ->orderBy('numero_boleta')
-            ->get();
+    protected function buildPdfAll(
+        Asociado $asociado,
+        ?int $boletaId = null // 👈 nuevo parámetro opcional
+    ) {
 
-        if ($boletas->isEmpty()) {
-            return redirect()
-                ->back()
-                ->with('error', 'Ese asociado no tiene boletas registradas.');
+        $query = Boleta::with([
+                'sorteo',
+                'sorteo.design'
+            ])
+            ->where('asociado_id', $asociado->id)
+            ->orderBy('numero_boleta');
+
+        // 👇 SI VIENE UNA BOLETA ESPECÍFICA, SOLO ESA
+        if ($boletaId) {
+            $query->where('id', $boletaId);
         }
 
+        $boletas = $query->get();
+
+        if ($boletas->isEmpty()) {
+            return back()->with(
+                'error',
+                'No se encontraron boletas para generar el PDF.'
+            );
+        }
+
+        // 🔥 IMPORTANTE:
+        // Si es una sola boleta, usamos SU sorteo
+        $primerSorteo = $boletas->first()->sorteo;
+
         $premios = Premio::where('activo', true)
+            ->where('sorteo_id', $primerSorteo->id)
             ->orderBy('orden')
             ->get();
 
-        $pdf = Pdf::loadView('pdf.boletas-individual', [
-            'asociado' => $asociado,
-            'boletas'  => $boletas,
-            'premios'  => $premios,
-        ])->setPaper('a4', 'portrait');
+        $design = $primerSorteo->design;
+
+        $pdf = Pdf::loadView(
+            'pdf.boletas-individual',
+            [
+                'asociado' => $asociado,
+                'boletas' => $boletas,
+                'premios' => $premios,
+                'design' => $design
+            ]
+        );
 
         $filename = 'boletas-' . $asociado->documento . '.pdf';
 
-        return $pdf->download($filename);
+        return $pdf->stream($filename);
     }
 }

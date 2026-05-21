@@ -1,220 +1,232 @@
 <!DOCTYPE html>
-<html lang="es">
+<html>
+
 <head>
-    <link rel="shortcut icon" href="logoo.png" type="image/png">
-    <meta charset="UTF-8">
-    <title>Boletas del Asociado</title>
+    <meta charset="utf-8">
+
     <style>
+        .boleta-numero {
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .numero-grande {
+            font-size: 20px;
+            font-weight: 900;
+
+        }
         @page {
-            margin: 28px 30px;
+            margin: 25px;
         }
 
         body {
-            font-family: DejaVu Sans, sans-serif;
-            color: #111827;
+            font-family: DejaVu Sans;
+            color: #111;
             font-size: 12px;
         }
 
-        .header {
-            border: 1px solid #dbe3ef;
-            border-radius: 14px;
-            padding: 18px 20px;
-            margin-bottom: 18px;
-            background: #f8fbff;
+        .page {
+            page-break-after: always;
         }
 
-        .title {
-            font-size: 22px;
+        .page:last-child {
+            page-break-after: auto;
+        }
+
+        .ticket {
+            border: 2px solid black;
+            border-radius: 8px;
+            padding: 25px;
+        }
+
+        .line {
+            border-top: 2px solid black;
+            margin-bottom: 20px;
+        }
+
+        .right {
+            text-align: right;
+        }
+
+        .center {
+            text-align: center;
+        }
+
+        .red {
+            color: red;
             font-weight: bold;
-            color: #0f172a;
-            margin-bottom: 4px;
         }
 
         .subtitle {
-            color: #475569;
-            font-size: 11px;
-        }
-
-        .grid {
-            width: 100%;
-            margin-bottom: 18px;
-        }
-
-        .grid td {
-            vertical-align: top;
-            width: 50%;
-            padding: 8px 10px 8px 0;
-        }
-
-        .label {
-            font-size: 10px;
-            color: #64748b;
-            margin-bottom: 3px;
-        }
-
-        .value {
-            font-size: 12px;
+            font-size: 18px;
             font-weight: bold;
-            color: #111827;
         }
+
+
 
         .section-title {
-            font-size: 14px;
+            font-size: 18px;
             font-weight: bold;
-            margin: 18px 0 10px;
-            color: #0f172a;
         }
 
-        .summary-box {
-            border: 1px solid #dbe3ef;
-            border-radius: 12px;
-            padding: 12px 14px;
-            margin-bottom: 16px;
-            background: #ffffff;
+        ul {
+            margin-top: 8px;
+            padding-left: 20px;
         }
 
-        .summary-number {
-            font-size: 20px;
-            font-weight: bold;
-            color: #1d4ed8;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        thead th {
-            background: #eff6ff;
-            color: #1e3a8a;
-            font-size: 11px;
-            text-transform: uppercase;
-            padding: 10px 12px;
-            border: 1px solid #dbe3ef;
-            text-align: left;
-        }
-
-        tbody td {
-            padding: 11px 12px;
-            border: 1px solid #e5e7eb;
-        }
-
-        .pill {
-            display: inline-block;
-            padding: 6px 12px;
-            border-radius: 999px;
-            background: #dbeafe;
-            color: #1d4ed8;
-            font-weight: bold;
-            letter-spacing: 1px;
-        }
-
-        .winner {
-            background: #dcfce7;
-            color: #166534;
-            padding: 5px 10px;
-            border-radius: 999px;
-            font-weight: bold;
-            font-size: 10px;
-        }
-
-        .normal {
-            background: #f1f5f9;
-            color: #334155;
-            padding: 5px 10px;
-            border-radius: 999px;
-            font-weight: bold;
-            font-size: 10px;
+        li {
+            margin-bottom: 8px;
+            line-height: 1.3;
         }
 
         .footer {
-            margin-top: 24px;
-            font-size: 10px;
-            color: #64748b;
+            margin-top: 40px;
+        }
+
+        .logo-box {
+            border: 1px solid black;
+            height: 65px;
             text-align: center;
+            line-height: 65px;
+        }
+
+        .footer-logo {
+            max-height: 55px;
+            vertical-align: middle;
         }
     </style>
 </head>
+
 <body>
-    <div class="header">
-        <!-- LOGO -->
-        <div style="text-align:center; margin-bottom:10px;">
-            <img src="{{ public_path('logazo.png') }}" style="height:80px;">
-        </div>
 
-        <div class="title">Boletas del Asociado</div>
-        <div class="subtitle">Documento individual para impresión y consulta</div>
-    </div>
+@foreach($boletas as $boleta)
 
-    <table class="grid">
-        <tr>
-            <td>
-                <div class="label">Asociado</div>
-                <div class="value">{{ $asociado->nombre_completo }}</div>
-            </td>
-            <td>
-                <div class="label">Documento</div>
-                <div class="value">{{ $asociado->documento }}</div>
-            </td>
-        </tr>
-        <tr>
-            <td>
-                <div class="label">Correo</div>
-                <div class="value">{{ $asociado->email ?: 'No registrado' }}</div>
-            </td>
-            <td>
-                <div class="label">WhatsApp</div>
-                <div class="value">{{ $asociado->whatsapp ?: 'No registrado' }}</div>
-            </td>
-        </tr>
-        <tr>
-            <td>
-                <div class="label">Cantidad total de boletas</div>
-                <div class="value">{{ $boletas->count() }}</div>
-            </td>
-            <td>
-                <div class="label">Fecha de generación</div>
-                <div class="value">{{ now()->format('d/m/Y H:i') }}</div>
-            </td>
-        </tr>
-    </table>
+    @php
+        $sorteo = $boleta->sorteo;
 
-    <div class="summary-box">
-        <div class="label">Total de boletas asignadas</div>
-        <div class="summary-number">{{ $boletas->count() }}</div>
-    </div>
+        $maxDigits = strlen((string) $sorteo->numero_fin);
 
-    <div class="section-title">Listado de boletas</div>
+        $numero = str_pad(
+            $boleta->numero_boleta,
+            $maxDigits,
+            '0',
+            STR_PAD_LEFT
+        );
+    @endphp
 
-    <table>
-        <thead>
-            <tr>
-                <th style="width: 18%;">Número</th>
-                <th style="width: 22%;">Monto base</th>
-                <th style="width: 14%;">Estado</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach($boletas as $boleta)
+    <div class="page">
+
+        <div class="ticket">
+
+            <table width="100%">
                 <tr>
-                    <td>
-                        <span class="pill">{{ $boleta->numero_boleta }}</span>
-                    </td>
-                    <td>${{ number_format((float)$boleta->monto_base, 0, ',', '.') }}</td>
-                    <td>
-                        @if($boleta->ganadora)
-                            <span class="winner">Gan.</span>
-                        @else
-                            <span class="normal">Act.</span>
-                        @endif
+                    <td width="50%" class="right">
+
+                        <div class="boleta-numero">
+                            Boleta No.
+                            <span class="red numero-grande">{{ $numero }}</span>
+                        </div>
+
+                        <br>
+
+                        Fecha Emisión:
+                        <span class="red">{{ $boleta->created_at->format('d-M-Y') }}</span>
+
+                        Agencia:
+                        <span class="red">{{ $asociado->agencia }}</span>
+
+                        Hora:
+                        <span class="red">{{ $boleta->created_at->format('H:i:s') }}</span>
+
                     </td>
                 </tr>
-            @endforeach
-        </tbody>
-    </table>
+            </table>
 
-    <div class="footer">
-        Documento generado por el sistema de sorteos.
+            <div class="center subtitle">
+                {{ $design?->subtitulo }}
+            </div>
+
+            <div class="center section">
+                {{ $design?->descripcion }}
+            </div>
+
+            <div class="center section">
+                Juega con el premio mayor de la lotería de
+                <b>{{ $sorteo->loteria }}</b>
+                en las siguientes fechas:
+            </div>
+
+            <ul>
+                @foreach($premios as $index => $premio)
+                    <li>
+                        <b>
+                            Sorteo:
+                        </b>
+                        {{ $sorteo->fecha_sorteo->format('d-M-Y') }}
+                        /
+                        {{ $premio->titulo }}
+                    </li>
+                @endforeach
+            </ul>
+
+            <div class="section section-title">
+                DESCRIPCIÓN DE LA ACTIVIDAD
+            </div>
+
+            <ul>
+
+                @if($design?->terminos)
+                    <li>
+                        {!! nl2br(e($design->terminos)) !!}
+                    </li>
+                @endif
+
+                <li>
+                    Esta boleta es intransferible,
+                    no podrá venderse, cederse, permutarse ni endosarse.
+                </li>
+
+                @if($design?->url_consulta_ganador)
+                    <li>
+                        Consulta ganador:
+                        {{ $design->url_consulta_ganador }}
+                    </li>
+                @endif
+
+            </ul>
+
+            <div class="center footer red">
+                {{ $design?->texto_coljuegos }}
+            </div>
+
+            <table width="100%" class="footer">
+                <tr>
+                    <td>
+                        <div class="logo-box">
+                                <img
+                                    class="footer-logo"
+                                    src="file://{{ public_path('storage/logos/Coopserp.png') }}"
+                                >
+                        </div>
+                    </td>
+
+                    <td>
+                        <div class="logo-box">
+                                <img
+                                    class="footer-logo"
+                                    src="file://{{ public_path('storage/logos/coljuegos.png') }}"
+                                >
+                        </div>
+                    </td>
+                </tr>
+            </table>
+
+        </div>
+
     </div>
+
+@endforeach
+
 </body>
+
 </html>

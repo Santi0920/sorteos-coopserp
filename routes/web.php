@@ -15,6 +15,9 @@ use App\Http\Controllers\Admin\LineaCreditoController;
 use App\Http\Controllers\Admin\ImportController;
 use App\Http\Controllers\Admin\AsociadoController;
 use App\Http\Controllers\Public\InformeBoletasController;
+use App\Http\Controllers\Admin\MapaBoletasController;
+use App\Http\Controllers\Admin\ReporteController;
+use App\Http\Controllers\Admin\BoletaDesignController;
 
 
 Route::get('/login', [LoginController::class, 'showLogin'])->name('login');
@@ -32,18 +35,18 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
 
         return new \App\Mail\BoletasPorCreditoMail($credito, $boletas);
     });
-    Route::get('importar', [ImportController::class, 'form'])
-        ->name('import.form');
+    Route::get('sorteos/{sorteo}/importar', [ImportController::class, 'form'])
+        ->name('sorteos.import.form');
 
-    Route::post('importar', [ImportController::class, 'import'])
-        ->name('import.store');
-
+    Route::post('sorteos/{sorteo}/importar', [ImportController::class, 'import'])
+        ->name('sorteos.import.store');
     Route::get('importar/plantilla', [ImportController::class, 'template'])
     ->name('import.template');
     
     Route::get('importar/plantilla-excel', [ImportController::class, 'templateExcel'])
     ->name('import.template.excel');
     Route::resource('sorteos', SorteoController::class);
+    
     Route::resource('premios', PremioController::class);
 
     Route::get('asociados', [AsociadoController::class, 'index'])
@@ -51,16 +54,27 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
 
     Route::get('asociados/{id}/creditos', [AsociadoController::class, 'creditos'])
         ->name('asociados.creditos');
+
     Route::get('boletas', [BoletaController::class, 'index'])->name('boletas.index');
+    Route::get('boletas/sorteo/{sorteo}', [BoletaController::class, 'index'])
+    ->name('boletas.sorteo');
     Route::post('boletas/generar', [BoletaController::class, 'generate'])->name('boletas.generate');
     Route::delete('boletas/sorteo/{sorteo}', [BoletaController::class, 'destroyBySorteo'])->name('boletas.destroyBySorteo');
 
-    Route::get('configuracion', [ConfiguracionGeneralController::class, 'edit'])->name('configuracion.edit');
-    Route::put('configuracion', [ConfiguracionGeneralController::class, 'update'])->name('configuracion.update');
+    Route::get('sorteos/{sorteo}/kpi', [SorteoKpiController::class, 'show'])
+        ->name('admin.sorteos.kpi');
+
 
     Route::get('ganadores', [GanadorController::class, 'index'])->name('ganadores.index');
     Route::post('ganadores/asignar-premio', [GanadorController::class, 'asignarPremio'])->name('ganadores.asignarPremio');
     Route::delete('ganadores/premio/{premio}/limpiar', [GanadorController::class, 'limpiarPremio'])->name('ganadores.limpiarPremio');
+    Route::post('ganadores/{sorteo}/resultado', 
+        [GanadorController::class, 'registrarResultado']
+    )->name('ganadores.registrarResultado');
+    Route::post('ganadores/guardar', [GanadorController::class, 'guardarResultado'])
+    ->name('ganadores.guardar');
+    Route::get('boletas/lookup/{numero}', [\App\Http\Controllers\Admin\BoletaController::class, 'lookupAsociado'])
+    ->name('boletas.lookup');
 
     Route::resource('lineas', LineaCreditoController::class)->parameters([
         'lineas' => 'linea'
@@ -69,8 +83,18 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     Route::get('pdf-boletas', [PdfBoletaController::class, 'form'])->name('pdf-boletas.form');
     Route::post('pdf-boletas', [PdfBoletaController::class, 'generate'])->name('pdf-boletas.generate');
 
-    Route::get('mapa-boletas', [App\Http\Controllers\Admin\MapaBoletasController::class, 'index'])
+    Route::get('boletas/mapa/{sorteo?}', [MapaBoletasController::class, 'index'])
         ->name('boletas.mapa');
+
+    Route::get('reportes', [ReporteController::class, 'index'])
+    ->name('reportes.index');
+
+    Route::get('{sorteo}', [BoletaDesignController::class, 'edit'])
+        ->name('boleta.design.edit');
+
+    Route::post('{sorteo}', [BoletaDesignController::class, 'update'])
+        ->name('boleta.design.update');
+
 });
 
 Route::get('/consulta', [ConsultaBoletaController::class, 'form'])->name('consulta.boletas.form');
@@ -81,4 +105,3 @@ Route::get('/', [LandingController::class, 'index'])->name('landing');
 Route::get('/resultados', [ResultadoController::class, 'index'])->name('resultados.index');
 
 Route::get('/informe-boletas', [InformeBoletasController::class, 'index'])->name('public.informe');
-Route::get('/detalle-boletas', [InformeBoletasController::class, 'detalle'])->name('public.detalle');
