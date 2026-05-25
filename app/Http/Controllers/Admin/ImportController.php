@@ -38,9 +38,6 @@ class ImportController extends Controller
             return back()->with('error', 'Archivo vacío');
         }
 
-        /**
-         * HEADERS NORMALIZADOS
-         */
         $headers = collect($rows[0])
             ->map(fn ($v) => (string) Str::of($v)->lower()->trim())
             ->toArray();
@@ -49,9 +46,6 @@ class ImportController extends Controller
 
         $map = array_flip($headers);
 
-        /**
-         * VALIDACIÓN DE COLUMNAS OBLIGATORIAS
-         */
         $requiredColumns = [
             'documento',
             'nombres',
@@ -109,7 +103,8 @@ class ImportController extends Controller
 
             return redirect()
                 ->route('admin.sorteos.index')
-                ->with('success', "Importación finalizada: $success OK, $failed errores");
+                ->with('success', "Importación finalizada: $success OK, $failed errores")
+                ->with('import_errors', $errors);
 
         } catch (\Exception $e) {
 
