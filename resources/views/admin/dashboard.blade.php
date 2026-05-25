@@ -101,7 +101,7 @@
                 <tbody>
                     @foreach($ultimosGanadores as $premio)
                         <tr>
-                            <td>{{ $premio->boletaGanadora->numero_boleta }}</td>
+                            <td>{{ $premio->boletaGanadora->numero_boleta ?? '-' }}</td>
                             <td>{{ $premio->boletaGanadora->asociado->nombre_completo ?? '-' }}</td>
                             <td>{{ $premio->sorteo->nombre }}</td>
                             <td>{{ $premio->titulo }}</td>

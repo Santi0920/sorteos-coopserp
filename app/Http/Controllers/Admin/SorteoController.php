@@ -32,46 +32,86 @@ class SorteoController extends Controller
 
     public function store(Request $request, SorteoNumeroService $service)
     {
-        $validated = $request->validate([
-            'nombre' => ['required', 'string', 'max:255'],
-            'fecha_sorteo' => ['required', 'date'],
-            'loteria' => ['nullable', 'string', 'max:255'],
-            'estado' => ['required', 'in:programado,ejecutado,cancelado'],
 
-            'numero_inicio' => [
-                'integer',
-                'min:0',
-                'max:9999'
-            ],
+        $validated =
+            $request
+            ->validate([
 
-            'numero_fin' => [
-                'required',
-                'integer',
-                'min:0',
-                'max:9999'
-            ],
+                'nombre'=>[
+                    'required'
+                ],
 
-            'tipo_asignacion' => ['required', 'in:equitativo,monto'],
-            'monto_por_boleta' => ['nullable', 'numeric', 'min:0'],
-            'es_reprogramado' => ['required', 'boolean'],
-            'observaciones' => ['nullable', 'string'],
-        ], [
-            'numero_inicio.integer' => 'El número inicial debe ser un número válido.',
-            'numero_fin.integer' => 'El número final debe ser un número válido.',
-            'numero_fin.max' => 'El número final no puede ser mayor a 9999.',
-        ]);
+                'fecha_sorteo'=>[
+                    'required',
+                    'date'
+                ],
 
-        $validated['activo'] = $request->has('activo');
+                'loteria'=>[
+                    'nullable'
+                ],
 
-        // 🔥 1. CREAR EL SORTEO PRIMERO
-        $sorteo = Sorteo::create($validated);
+                'estado'=>[
+                    'required'
+                ],
 
-        // 🔥 2. GENERAR POOL AUTOMÁTICAMENTE
-        $service->generarPool($sorteo);
+                'numero_inicio'=>[
+                    'integer'
+                ],
+
+                'numero_fin'=>[
+                    'required',
+                    'integer'
+                ],
+
+                'tipo_asignacion'=>[
+                    'required'
+                ],
+
+                'boletas_por_persona'=>[
+                    'required',
+                    'integer',
+                    'min:1'
+                ],
+
+                'es_reprogramado'=>[
+                    'required'
+                ],
+
+                'observaciones'=>[
+                    'nullable'
+                ]
+
+            ]);
+
+        $validated['activo'] =
+            $request
+            ->boolean(
+                'activo'
+            );
+
+        $sorteo =
+            Sorteo::create(
+                $validated
+            );
+
+        $service
+            ->generarPool(
+                $sorteo
+            );
 
         return redirect()
-            ->route('admin.sorteos.index')
-            ->with('success', 'Sorteo creado correctamente y pool generado.');
+
+            ->route(
+                'admin.sorteos.index'
+            )
+
+            ->with(
+
+                'success',
+
+                'Sorteo creado'
+
+            );
     }
 
     public function show(Sorteo $sorteo)
@@ -88,48 +128,110 @@ class SorteoController extends Controller
 
     public function update(Request $request, Sorteo $sorteo)
     {
-        $validated = $request->validate([
-            'nombre' => ['required', 'string', 'max:255'],
 
-            'fecha_sorteo' => ['required', 'date'],
+        $validated =
+            $request
+            ->validate([
 
-            'loteria' => ['nullable', 'string', 'max:255'],
+                'nombre' => [
+                    'required'
+                ],
 
-            'estado' => ['required', 'in:programado,ejecutado,cancelado'],
+                'fecha_sorteo' => [
+                    'required',
+                    'date'
+                ],
 
-            'numero_inicio' => [
-                'integer',
-                'min:0',
-                'max:9999'
-            ],
+                'loteria' => [
+                    'nullable'
+                ],
 
-            'numero_fin' => [
-                'required',
-                'integer',
-                'min:0',
-                'max:9999'
-            ],
+                'estado' => [
+                    'required'
+                ],
 
-            'tipo_asignacion' => ['required', 'in:equitativo,monto'],
+                'numero_inicio' => [
+                    'integer',
+                    'min:0',
+                ],
 
-            'monto_por_boleta' => ['nullable', 'numeric', 'min:0'],
+                'numero_fin' => [
+                    'required',
+                    'integer',
+                    'min:0',
+                ],
 
-            'es_reprogramado' => ['required', 'boolean'],
+                'tipo_asignacion' => [
+                    'required'
+                ],
 
-            'observaciones' => ['nullable', 'string'],
-        ], [
-            'numero_inicio.integer' => 'El número inicial debe ser un número válido.',
-            'numero_fin.integer' => 'El número final debe ser un número válido.',
-            'numero_fin.max' => 'El número final no puede ser mayor a 9999.',
-        ]);
+                'boletas_por_persona' => [
+                    'required',
+                    'integer',
+                    'min:1'
+                ],
 
-        $validated['activo'] = $request->has('activo');
+                'es_reprogramado' => [
+                    'required'
+                ],
 
-        $sorteo->update($validated);
+                'observaciones' => [
+                    'nullable'
+                ]
+
+            ]);
+
+        $validated['activo'] =
+            $request
+            ->boolean(
+                'activo'
+            );
+
+
+
+        if (
+            $sorteo
+                ->boletas()
+                ->exists()
+        ) {
+
+            unset(
+
+                $validated[
+                    'numero_inicio'
+                ],
+
+                $validated[
+                    'numero_fin'
+                ],
+
+                $validated[
+                    'boletas_por_persona'
+                ]
+
+            );
+
+        }
+
+        $sorteo
+            ->update(
+                $validated
+            );
 
         return redirect()
-            ->route('admin.sorteos.index')
-            ->with('success', 'Sorteo actualizado correctamente.');
+
+            ->route(
+                'admin.sorteos.index'
+            )
+
+            ->with(
+
+                'success',
+
+                'Sorteo actualizado correctamente'
+
+            );
+
     }
 
     public function destroy(Sorteo $sorteo)

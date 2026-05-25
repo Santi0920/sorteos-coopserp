@@ -2,11 +2,17 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Exports\PlantillaAsociadosExport;
 use App\Http\Controllers\Controller;
 use App\Models\Asociado;
 use App\Models\Sorteo;
+use App\Models\Import;
+
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
+
 use Maatwebsite\Excel\Facades\Excel;
 
 class ImportController extends Controller
@@ -19,43 +25,97 @@ class ImportController extends Controller
     public function import(Request $request, Sorteo $sorteo)
     {
         $request->validate([
-            'file' => 'required|file|mimes:csv,txt,xlsx'
+            'file' => 'required|file|mimes:xlsx,csv,txt'
         ]);
 
-        $rows = $this->readFile($request->file('file'));
+        $file = $request->file('file');
+
+        $path = $file->store('imports/sorteos', 'public');
+
+        $rows = $this->readFile($file);
 
         if (count($rows) < 2) {
-            return back()->with('error', 'Archivo vacío o inválido.');
+            return back()->with('error', 'Archivo vacío');
         }
 
-        // 🔥 HEADER MAPPING
-        $headers = array_map(fn($h) => strtolower(trim($h)), $rows[0]);
+        /**
+         * HEADERS NORMALIZADOS
+         */
+        $headers = collect($rows[0])
+            ->map(fn ($v) => (string) Str::of($v)->lower()->trim())
+            ->toArray();
+
         unset($rows[0]);
 
         $map = array_flip($headers);
 
-        // 🔥 VALIDACIÓN MÍNIMA
-        if (!isset($map['cedula']) || !isset($map['nombre'])) {
-            return back()->with('error', 'El archivo debe tener columnas: cedula, nombre');
+        /**
+         * VALIDACIÓN DE COLUMNAS OBLIGATORIAS
+         */
+        $requiredColumns = [
+            'documento',
+            'nombres',
+            'apellidos',
+        ];
+
+        foreach ($requiredColumns as $col) {
+            if (!isset($map[$col])) {
+                return back()->with('error', "Falta la columna obligatoria: $col");
+            }
         }
 
         DB::beginTransaction();
 
+        $import = Import::create([
+            'sorteo_id' => $sorteo->id,
+            'file_path' => $path,
+            'rows_total' => count($rows),
+            'rows_success' => 0,
+            'rows_failed' => 0,
+            'errors' => []
+        ]);
+
+        $success = 0;
+        $failed = 0;
+        $errors = [];
+
         try {
 
-            foreach ($rows as $index => $row) {
-                $this->processRow($row, $map, $sorteo, $index + 2);
+            foreach ($rows as $i => $row) {
+
+                try {
+
+                    $this->processRow($row, $map, $sorteo, $i + 2);
+                    $success++;
+
+                } catch (\Exception $e) {
+
+                    $failed++;
+
+                    $errors[] = [
+                        'row' => $i + 2,
+                        'error' => $e->getMessage()
+                    ];
+                }
             }
+
+            $import->update([
+                'rows_success' => $success,
+                'rows_failed' => $failed,
+                'errors' => $errors
+            ]);
 
             DB::commit();
 
             return redirect()
                 ->route('admin.sorteos.index')
-                ->with('success', 'Importación completada correctamente.');
+                ->with('success', "Importación finalizada: $success OK, $failed errores");
 
         } catch (\Exception $e) {
 
             DB::rollBack();
+
+            Log::error($e);
 
             return back()->with('error', $e->getMessage());
         }
@@ -67,11 +127,11 @@ class ImportController extends Controller
 
         if (in_array($ext, ['csv', 'txt'])) {
 
+            $rows = [];
             $handle = fopen($file->getRealPath(), 'r');
 
-            $rows = [];
-            while (($row = fgetcsv($handle)) !== false) {
-                $rows[] = $row;
+            while (($data = fgetcsv($handle)) !== false) {
+                $rows[] = $data;
             }
 
             fclose($handle);
@@ -79,62 +139,47 @@ class ImportController extends Controller
             return $rows;
         }
 
-        if ($ext === 'xlsx') {
-            return Excel::toArray([], $file)[0];
-        }
-
-        return [];
+        return Excel::toArray([], $file)[0];
     }
 
     private function processRow($row, $map, $sorteo, $fila)
     {
-        $cedula  = $row[$map['cedula']] ?? null;
-        $nombre  = $row[$map['nombre']] ?? null;
+        $documento = trim($row[$map['documento']] ?? '');
 
-        if (!$cedula || !$nombre) {
-            throw new \Exception("Fila $fila: cédula o nombre obligatorio.");
+        if (!$documento) {
+            throw new \Exception("Fila {$fila}: Documento obligatorio");
         }
 
-        $credito = isset($map['credito'])
-            ? (float) ($row[$map['credito']] ?? 0)
-            : 0;
-
         $asociado = Asociado::updateOrCreate(
-            ['documento' => $cedula],
             [
-                'nombres'  => $nombre,
-                'agencia'  => $row[$map['agencia']] ?? null,
-                'cuenta'   => $row[$map['cuenta']] ?? null,
-                'nomina'   => $row[$map['nomina']] ?? null,
-                'email'    => $row[$map['email']] ?? null,
+                'documento' => $documento,
+            ],
+            [
+                'nombres' => $row[$map['nombres']] ?? null,
+                'apellidos' => $row[$map['apellidos']] ?? null,
+                'email' => $row[$map['email']] ?? null,
+                'telefono' => $row[$map['telefono']] ?? null,
+
+                'cuenta' => $row[$map['cuenta']] ?? null,
+                'agencia' => $row[$map['agencia']] ?? null,
+                'nomina' => $row[$map['nomina']] ?? null,
+
+                'coordinador' => $row[$map['coordinador']] ?? null,
+                'monto' => $row[$map['monto']] ?? null,
+                'dependencia' => $row[$map['dependencia']] ?? null,
             ]
         );
 
-        // 🔥 CÁLCULO DE BOLETAS
-        $boletas = 1;
-
-        if ($sorteo->tipo_asignacion === 'por_valor') {
-
-            if ($sorteo->monto_por_boleta > 0) {
-                $boletas = max(1, floor($credito / $sorteo->monto_por_boleta));
-            }
-        }
-
-        // 🔥 RELACIÓN
         $sorteo->asociados()->syncWithoutDetaching([
-            $asociado->id => [
-                'credito' => $credito,
-                'boletas_asignadas' => $boletas,
-            ]
+            $asociado->id
         ]);
     }
 
-    // 📥 DESCARGA PLANTILLA
     public function template()
     {
-        return response()->streamDownload(function () {
-            echo "cedula,nombre,agencia,cuenta,nomina,email,credito\n";
-            echo "12345678,Juan Perez,Quibdo,1001,Nomina1,juan@email.com,5000000\n";
-        }, 'plantilla_asociados.csv');
+        return Excel::download(
+            new PlantillaAsociadosExport(),
+            'plantilla_importacion_asociados.xlsx'
+        );
     }
 }

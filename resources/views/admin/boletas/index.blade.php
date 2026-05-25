@@ -51,19 +51,7 @@
             </div>
         </div>
 
-        <div class="col-lg-4">
-            <div class="content-card card h-100">
-                <div class="card-body d-flex flex-column justify-content-center">
-                    <div class="text-muted small mb-2">Suma total de créditos</div>
-                    <div class="fw-bold fs-3">
-                        ${{ number_format((float) $totalMontoCreditos, 0, ',', '.') }}
-                    </div>
-                    <div class="text-muted small mt-1">
-                        Créditos únicos acumulados de asociados activos
-                    </div>
-                </div>
-            </div>
-        </div>
+
     </div>
 
     <div class="content-card card">

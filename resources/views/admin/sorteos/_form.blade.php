@@ -98,39 +98,57 @@
         <h6 class="text-muted fw-bold">⚙️ Tipo de sorteo</h6>
     </div>
 
-    <div class="col-md-6 mt-3">
-        <label class="form-label">Tipo de asignación</label>
-        <small class="text-muted d-block mb-1">
-            Define cómo se distribuye el valor de las boletas.
-        </small>
+    <div class="col-md-6">
 
-        <select name="tipo_asignacion" id="tipo_asignacion" class="form-select" required>
-            <option value="equitativo" {{ old('tipo_asignacion', $sorteo->tipo_asignacion ?? '') == 'equitativo' ? 'selected' : '' }}>
-                Equitativo (sin valor por boleta)
+        <label class="form-label">
+            Tipo de asignación
+        </label>
+
+        <select
+            name="tipo_asignacion"
+            class="form-select"
+        >
+
+            <option
+                value="manual"
+                selected
+            >
+                Cantidad fija
             </option>
-            <option value="monto" {{ old('tipo_asignacion', $sorteo->tipo_asignacion ?? '') == 'monto' ? 'selected' : '' }}>
-                Por valor (cada boleta tiene precio)
-            </option>
+
         </select>
+
     </div>
 
-    <div class="col-md-6 mt-3">
-        <label class="form-label">Monto por boleta</label>
-        <small class="text-muted d-block mb-1">
-            Solo aplica si el tipo de asignación es "Por valor".
-        </small>
+    <div class="col-md-6">
+
+        <label class="form-label">
+            Boletas por persona
+        </label>
+
+
 
         <input
             type="number"
-            name="monto_por_boleta"
-            id="monto_por_boleta"
+
+            name="boletas_por_persona"
+
+            min="1"
+
+            required
+
             class="form-control"
-            step="0.01"
-            min="0"
-            value="{{ old('monto_por_boleta', $sorteo->monto_por_boleta ?? '') }}"
-            disabled
+
+            value="{{ old(
+                'boletas_por_persona',
+                $sorteo->boletas_por_persona ?? 1
+            ) }}"
+
         >
+
     </div>
+
+
 
     {{-- ========================= --}}
     {{-- CONFIGURACIÓN EXTRA --}}

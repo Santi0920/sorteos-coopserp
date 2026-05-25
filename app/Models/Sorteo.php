@@ -12,31 +12,60 @@ class Sorteo extends Model
     protected $table = 'sorteos';
 
     protected $fillable = [
+
         'nombre',
+
         'fecha_sorteo',
+
         'loteria',
+
         'estado',
+
         'numero_inicio',
+
         'numero_fin',
+
         'tipo_asignacion',
-        'monto_por_boleta',
+
+        'boletas_por_persona',
+
+        'texto_promocional',
+
+        'activo',
+
         'es_reprogramado',
+
         'observaciones',
+
         'numero_resultado',
+
         'soporte_resultado',
+
+        'boletas_generadas',
+
     ];
 
     protected $casts = [
+
         'fecha_sorteo' => 'date',
+
         'es_reprogramado' => 'boolean',
+
         'activo' => 'boolean',
+
+        'boletas_generadas' => 'boolean',
+
         'numero_inicio' => 'integer',
+
         'numero_fin' => 'integer',
+
+        'boletas_por_persona' => 'integer',
+
     ];
 
     public function premios()
     {
-        return $this->hasMany(Premio::class)->orderBy('orden');
+        return $this->hasMany(Premio::class);
     }
 
     public function boletas()
@@ -46,16 +75,23 @@ class Sorteo extends Model
 
     public function asociados()
     {
-        return $this->belongsToMany(
-            Asociado::class,
-            'sorteo_asociado',
-            'sorteo_id',
-            'asociado_id'
-        )->withTimestamps();
+        return $this
+            ->belongsToMany(
+                Asociado::class,
+                'sorteo_asociado'
+            )
+            ->withTimestamps();
     }
 
     public function design()
     {
-        return $this->hasOne(BoletaDesign::class);
+        return $this->hasOne(
+            BoletaDesign::class
+        );
+    }
+
+    public function imports()
+    {
+        return $this->hasMany(Import::class);
     }
 }

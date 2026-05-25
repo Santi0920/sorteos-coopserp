@@ -12,87 +12,76 @@ class BoletaGeneratorService
     {
         return DB::transaction(function () use ($sorteo) {
 
-            // 🔴 VALIDACIÓN: rango
-            if ($sorteo->numero_fin <= $sorteo->numero_inicio) {
+            if ($sorteo->boletas_generadas) {
                 return [
                     'success' => false,
-                    'message' => 'El rango del sorteo no es válido',
+                    'message' => 'Ya fueron generadas'
                 ];
             }
 
-            // 🔴 ASOCIADOS DEL SORTEO (PIVOTE)
             $asociados = $sorteo->asociados()->get();
 
             if ($asociados->isEmpty()) {
                 return [
                     'success' => false,
-                    'message' => 'No hay asociados vinculados al sorteo',
+                    'message' => 'No hay participantes'
                 ];
             }
 
-            // 🔴 POOL DE NÚMEROS DISPONIBLES
-            $numeros = DB::table('sorteo_numeros')
-                ->where('sorteo_id', $sorteo->id)
-                ->where('usado', false)
-                ->orderBy('id')
-                ->get();
+            $porPersona = $sorteo->boletas_por_persona;
 
-            if ($numeros->isEmpty()) {
-                return [
-                    'success' => false,
-                    'message' => 'No hay números disponibles en el pool',
-                ];
-            }
-
-            $totalBoletas = $numeros->count();
-            $totalAsociados = $asociados->count();
-
-            // 🔴 CUÁNTAS BOLETAS POR ASOCIADO
-            $base = intdiv($totalBoletas, $totalAsociados);
-            $resto = $totalBoletas % $totalAsociados;
-
-            $index = 0;
             $creadas = 0;
 
-            foreach ($asociados as $i => $asociado) {
+            foreach ($asociados as $asociado) {
 
-                $cantidad = $base;
+                for ($i = 1; $i <= $porPersona; $i++) {
 
-                // repartir sobrantes
-                if ($resto > 0) {
-                    $cantidad++;
-                    $resto--;
-                }
+                    /**
+                     * 🔐 BLOQUEO SEGURO: evita duplicados en concurrencia
+                     */
+                    $numero = DB::table('sorteo_numeros')
+                        ->where('sorteo_id', $sorteo->id)
+                        ->where('usado', false)
+                        ->inRandomOrder()
+                        ->lockForUpdate()
+                        ->first();
 
-                for ($j = 0; $j < $cantidad; $j++) {
-
-                    if (!isset($numeros[$index])) {
-                        break;
+                    if (!$numero) {
+                        break 2;
                     }
-
-                    $numero = $numeros[$index];
 
                     Boleta::create([
                         'sorteo_id' => $sorteo->id,
                         'asociado_id' => $asociado->id,
                         'numero_boleta' => $numero->numero,
                         'monto_base' => 0,
-                        'ganadora' => false,
+                        'bloque_boletas' => $porPersona,
+                        'ganadora' => false
                     ]);
 
                     DB::table('sorteo_numeros')
                         ->where('id', $numero->id)
-                        ->update(['usado' => true]);
+                        ->update([
+                            'usado' => true
+                        ]);
 
-                    $index++;
                     $creadas++;
                 }
             }
 
+            $sorteo->update([
+                'boletas_generadas' => true
+            ]);
+
+            $totalDisponibles = DB::table('sorteo_numeros')
+                ->where('sorteo_id', $sorteo->id)
+                ->count();
+
             return [
                 'success' => true,
-                'message' => "Boletas generadas correctamente ({$creadas})",
-                'generated' => $creadas
+                'message' =>
+                    'Boletas generadas: ' . $creadas .
+                    ' | Disponibles totales: ' . $totalDisponibles
             ];
         });
     }
