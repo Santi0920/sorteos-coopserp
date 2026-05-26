@@ -98,29 +98,8 @@
         <h6 class="text-muted fw-bold">⚙️ Tipo de sorteo</h6>
     </div>
 
-    <div class="col-md-6">
 
-        <label class="form-label">
-            Tipo de asignación
-        </label>
-
-        <select
-            name="tipo_asignacion"
-            class="form-select"
-        >
-
-            <option
-                value="manual"
-                selected
-            >
-                Cantidad fija
-            </option>
-
-        </select>
-
-    </div>
-
-    <div class="col-md-6">
+    <div class="col-md-12">
 
         <label class="form-label">
             Boletas por persona
