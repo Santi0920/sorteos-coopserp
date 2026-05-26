@@ -63,9 +63,7 @@ class SorteoController extends Controller
                     'integer'
                 ],
 
-                'tipo_asignacion'=>[
-                    'required'
-                ],
+
 
                 'boletas_por_persona'=>[
                     'required',
@@ -159,10 +157,6 @@ class SorteoController extends Controller
                     'required',
                     'integer',
                     'min:0',
-                ],
-
-                'tipo_asignacion' => [
-                    'required'
                 ],
 
                 'boletas_por_persona' => [
