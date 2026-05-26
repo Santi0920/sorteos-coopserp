@@ -54,25 +54,26 @@
 
                         <div class="row">
 
-                            <div class="col-md-6">
-                                <ul>
-                                    <li><b>Documento</b></li>
-                                    <li>Nombres</li>
-                                    <li>Apellidos</li>
-                                    <li>Email</li>
-                                    <li>Telefono</li>
-                                </ul>
-                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <ul class="list-unstyled">
+                                        <li><strong>1.</strong> Documento</li>
+                                        <li><strong>2.</strong> Nombres</li>
+                                        <li><strong>3.</strong> Apellidos</li>
+                                        <li><strong>4.</strong> Correo Electrónico</li>
+                                        <li><strong>5.</strong> Teléfono</li>
+                                    </ul>
+                                </div>
 
-                            <div class="col-md-6">
-                                <ul>
-                                    <li>Cuenta</li>
-                                    <li>Agencia</li>
-                                    <li>Nomina</li>
-                                    <li>Coordinador</li>
-                                    <li>Monto</li>
-                                    <li>Dependencia</li>
-                                </ul>
+                                <div class="col-md-6">
+                                    <ul class="list-unstyled">
+                                        <li><strong>6.</strong> Cuenta</li>
+                                        <li><strong>7.</strong> Agencia</li>
+                                        <li><strong>8.</strong> Nómina</li>
+                                        <li><strong>9.</strong> Coordinador</li>
+                                        <li><strong>10</strong> Dependencia</li>
+                                    </ul>
+                                </div>
                             </div>
 
                         </div>
@@ -112,65 +113,5 @@
 
 </div>
 
-{{-- ========================= --}}
-{{-- 🚨 MODAL DE ERRORES --}}
-{{-- ========================= --}}
-
-@if(session('import_errors') && count(session('import_errors')) > 0)
-
-<div class="modal fade" id="importErrorsModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-scrollable">
-        <div class="modal-content">
-
-            <div class="modal-header bg-danger text-white">
-                <h5 class="modal-title">
-                    ⚠️ Errores de importación
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-
-            <div class="modal-body">
-
-                <p class="text-muted">
-                    Se encontraron errores en las siguientes filas:
-                </p>
-
-                <table class="table table-bordered table-sm">
-                    <thead>
-                        <tr>
-                            <th>Fila</th>
-                            <th>Error</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach(session('import_errors') as $error)
-                            <tr>
-                                <td>{{ $error['row'] }}</td>
-                                <td class="text-danger">{{ $error['error'] }}</td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-
-            </div>
-
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                    Cerrar
-                </button>
-            </div>
-
-        </div>
-    </div>
-</div>
-
-<script>
-document.addEventListener("DOMContentLoaded", function () {
-    var modal = new bootstrap.Modal(document.getElementById('importErrorsModal'));
-    modal.show();
-});
-</script>
-
-@endif
 
 @endsection

@@ -134,6 +134,7 @@
                             <th>Agencia</th>
                             <th>Cuenta</th>
                             <th>Nómina</th>
+                            <th>Coordinador</th>
                             <th>Estado</th>
                         </tr>
                     </thead>
@@ -177,6 +178,9 @@
                             <td>
                                 {{ $asociado->nomina ?: '—' }}
                             </td>
+
+                            <td>
+                                {{ $asociado->coordinador ?: '—' }}
 
                             <td>
 

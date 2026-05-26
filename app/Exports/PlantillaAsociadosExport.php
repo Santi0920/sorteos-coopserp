@@ -20,7 +20,6 @@ class PlantillaAsociadosExport implements FromArray
                 'Agencia',
                 'Nomina',
                 'Coordinador',
-                'Monto',
                 'Dependencia'
             ],
 
@@ -32,10 +31,9 @@ class PlantillaAsociadosExport implements FromArray
                 '3001234567',
                 '102030',
                 'Medellin',
-                'Operaciones',
-                'Carlos Perez',
-                '5000000',
-                'Backoffice'
+                'COOPSERP EMPLEADOS',
+                'Carolina Gonzalez',
+                'Empleados'
             ]
 
         ];

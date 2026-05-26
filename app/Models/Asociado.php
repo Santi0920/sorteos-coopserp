@@ -23,6 +23,8 @@ class Asociado extends Model
         'cuenta', 
         'agencia', 
         'nomina', 
+        'coordinador',
+        'dependencia',
         'consentimiento_datos_at'
     ];
 

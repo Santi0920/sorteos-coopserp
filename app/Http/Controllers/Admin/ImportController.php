@@ -160,7 +160,6 @@ class ImportController extends Controller
                 'nomina' => $row[$map['nomina']] ?? null,
 
                 'coordinador' => $row[$map['coordinador']] ?? null,
-                'monto' => $row[$map['monto']] ?? null,
                 'dependencia' => $row[$map['dependencia']] ?? null,
             ]
         );
