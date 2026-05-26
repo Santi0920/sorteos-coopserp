@@ -1,14 +1,16 @@
 @extends('layouts.admin')
 
 @section('content')
+<div class="">
+    <a href="{{ route('admin.sorteos.index') }}"
+       class="btn btn-outline-secondary rounded-pill px-4">
+        <i class="bi bi-arrow-left me-1"></i>
+        Volver a sorteos
+    </a>
+</div>
 <div class="container py-4">
 
     <div class="text-center mb-1">
-
-        <div class="display-6 fw-bold">
-            🎉🎟️ SORTEO ACTIVO 🎟️🎉
-        </div>
-
         <h1 class="fw-bold text-primary mt-2" style="font-size: 2.5rem;">
             🏆 {{ $sorteo->nombre ?? 'Sorteo sin nombre' }} 🏆
         </h1>

@@ -18,7 +18,13 @@
 @endsection
 
 @section('content')
-
+<div class="mb-3">
+    <a href="{{ route('admin.sorteos.index') }}"
+       class="btn btn-outline-secondary rounded-pill px-4">
+        <i class="bi bi-arrow-left me-1"></i>
+        Volver a sorteos
+    </a>
+</div>
     <div class="row g-4 mb-4">
         <div class="col-lg-4">
             <div class="stats-box">
