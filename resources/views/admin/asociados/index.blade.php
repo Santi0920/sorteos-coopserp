@@ -30,11 +30,11 @@
 
         <div>
             <h5 class="mb-1 fw-bold">
-                Listado de asociados
+                Listado de Participantes
             </h5>
 
             <small class="text-muted">
-                Consulta asociados vinculados a sorteos.
+                Consulta participantes vinculados a sorteos.
             </small>
         </div>
 
