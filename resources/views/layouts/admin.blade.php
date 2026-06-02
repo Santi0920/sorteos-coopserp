@@ -428,12 +428,12 @@
                         <i class="bi bi-gift"></i>
                         <span>Premios</span>
                     </a>
-
+<!-- 
                     <a href="{{ route('admin.boletas.index') }}"
                     class="nav-link {{ request()->routeIs('admin.boletas.*') ? 'active' : '' }}">
                         <i class="bi bi-ticket-perforated"></i>
                         <span>Boletas</span>
-                    </a>
+                    </a> -->
 
                     <a href="{{ route('admin.ganadores.index') }}"
                     class="nav-link {{ request()->routeIs('admin.ganadores.*') ? 'active' : '' }}">
