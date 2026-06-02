@@ -101,12 +101,6 @@
 
     <div class="col-md-12">
 
-        <label class="form-label">
-            Boletas por persona
-        </label>
-
-
-
         <input
             type="number"
 

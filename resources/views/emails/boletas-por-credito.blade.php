@@ -35,9 +35,7 @@
                 <div style="font-size:26px; font-weight:900; color:#2e7d5b;">
                     SORTEOS MOTOCICLETAS AKT
                 </div>
-                <div style="font-size:13px; font-weight:600;">
-                    Juega con el premio mayor de la lotería de Cundinamarca en las siguientes fechas:
-                </div>
+
             </td>
 
             <td style="width:90px; text-align:right;">

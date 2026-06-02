@@ -133,6 +133,7 @@
                             <th>Email</th>
                             <th>Agencia</th>
                             <th>Cuenta</th>
+                            <th>Boletas por Persona</th>
                             <th>Nómina</th>
                             <th>Coordinador</th>
                             <th>Estado</th>
@@ -146,7 +147,7 @@
                         <tr>
 
                             <td>
-                                {{ $asociado->id }}
+                                {{ $loop->iteration }}
                             </td>
 
                             <td>
@@ -173,6 +174,10 @@
 
                             <td>
                                 {{ $asociado->cuenta ?: '—' }}
+                            </td>
+
+                           <td class="fw-bold">
+                                {{ $asociado->boletas_por_persona ?: '—' }}
                             </td>
 
                             <td>

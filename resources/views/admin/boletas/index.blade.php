@@ -124,7 +124,9 @@
                         <tbody>
                         @foreach($boletas as $boleta)
                             <tr>
-                                <td>{{ $boleta->id }}</td>
+                                <td>
+                                    {{ $loop->iteration }}
+                                </td>
 
                                 @php
                                     $maxDigits = strlen((string) $boleta->sorteo->numero_fin);

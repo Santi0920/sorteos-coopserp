@@ -50,6 +50,7 @@ class ImportController extends Controller
             'documento',
             'nombres',
             'apellidos',
+            'boletas por persona'
         ];
 
         foreach ($requiredColumns as $col) {
@@ -156,6 +157,10 @@ class ImportController extends Controller
                 'telefono' => $row[$map['telefono']] ?? null,
 
                 'cuenta' => $row[$map['cuenta']] ?? null,
+
+                'boletas_por_persona' =>
+                    intval($row[$map['boletas por persona']] ?? 1),
+
                 'agencia' => $row[$map['agencia']] ?? null,
                 'nomina' => $row[$map['nomina']] ?? null,
 

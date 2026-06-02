@@ -28,17 +28,17 @@ class BoletaGeneratorService
                 ];
             }
 
-            $porPersona = $sorteo->boletas_por_persona;
-
             $creadas = 0;
 
             foreach ($asociados as $asociado) {
 
-                for ($i = 1; $i <= $porPersona; $i++) {
+                $cantidadBoletas = max(
+                    1,
+                    intval($asociado->boletas_por_persona ?? 1)
+                );
 
-                    /**
-                     * 🔐 BLOQUEO SEGURO: evita duplicados en concurrencia
-                     */
+                for ($i = 1; $i <= $cantidadBoletas; $i++) {
+
                     $numero = DB::table('sorteo_numeros')
                         ->where('sorteo_id', $sorteo->id)
                         ->where('usado', false)
@@ -55,7 +55,7 @@ class BoletaGeneratorService
                         'asociado_id' => $asociado->id,
                         'numero_boleta' => $numero->numero,
                         'monto_base' => 0,
-                        'bloque_boletas' => $porPersona,
+                        'bloque_boletas' => $cantidadBoletas,
                         'ganadora' => false
                     ]);
 

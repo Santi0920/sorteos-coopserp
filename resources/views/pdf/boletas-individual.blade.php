@@ -150,11 +150,7 @@
                 {{ $design?->descripcion }}
             </div>
 
-            <div class="center section">
-                Juega con el premio mayor de la lotería de
-                <b>{{ $sorteo->loteria }}</b>
-                en las siguientes fechas:
-            </div>
+
 
             <ul>
                 @foreach($premios as $index => $premio)

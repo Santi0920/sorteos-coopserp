@@ -39,10 +39,6 @@
                             🎟️ Configuración del sorteo
                         </h6>
 
-                        <p class="mb-0">
-                            Boletas por persona:
-                            <b>{{ $sorteo->boletas_por_persona }}</b>
-                        </p>
 
                     </div>
 
@@ -68,10 +64,11 @@
                                 <div class="col-md-6">
                                     <ul class="list-unstyled">
                                         <li><strong>6.</strong> Cuenta</li>
-                                        <li><strong>7.</strong> Agencia</li>
-                                        <li><strong>8.</strong> Nómina</li>
-                                        <li><strong>9.</strong> Coordinador</li>
-                                        <li><strong>10</strong> Dependencia</li>
+                                        <li><strong>7.</strong> Boletas por Persona</li>
+                                        <li><strong>8.</strong> Agencia</li>
+                                        <li><strong>9.</strong> Nómina</li>
+                                        <li><strong>10.</strong> Coordinador</li>
+                                        <li><strong>11.</strong> Dependencia</li>
                                     </ul>
                                 </div>
                             </div>
