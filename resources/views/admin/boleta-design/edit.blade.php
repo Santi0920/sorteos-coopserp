@@ -165,12 +165,18 @@
                                         Fecha Emisión:
                                         <span class="red">{{ now()->format('d-M-Y') }}</span>
 
-                                        <br>
+                                        Nombre:
+                                        <span class="red">Juan Pérez</span>
 
+                                        Cédula:
+                                        <span class="red">1234567890</span>
+
+                                        Cuenta:
+                                        <span class="red">987654321</span>
+<br>
                                         Agencia:
-                                        <span class="red">{{ $asociado->agencia ?? 'AGENCIA' }}</span>
+                                        <span class="red">Cali BC</span>
 
-                                        <br>
 
                                         Hora:
                                         <span class="red">{{ now()->format('H:i:s') }}</span>

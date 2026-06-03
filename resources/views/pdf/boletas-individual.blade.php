@@ -132,11 +132,22 @@
                         Fecha Emisión:
                         <span class="red">{{ $boleta->created_at->format('d-M-Y') }}</span>
 
+                        Nombre:
+                        <span class="red">{{ $asociado->nombres }} {{ $asociado->apellidos }}</span>
+
+                        Cédula:
+                        <span class="red">{{ $asociado->documento }}</span>
+
+                        Cuenta:
+                        <span class="red">{{ $asociado->cuenta }}</span>
+<br>
                         Agencia:
                         <span class="red">{{ $asociado->agencia }}</span>
 
                         Hora:
                         <span class="red">{{ $boleta->created_at->format('H:i:s') }}</span>
+                        
+
 
                     </td>
                 </tr>
