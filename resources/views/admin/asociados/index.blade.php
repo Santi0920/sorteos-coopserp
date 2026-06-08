@@ -127,7 +127,7 @@
 
                     <thead>
                         <tr>
-                            <th>ID</th>
+          
                             <th>Cédula</th>
                             <th>Nombre</th>
                             <th>Email</th>
@@ -145,10 +145,6 @@
                     @foreach($asociados as $asociado)
 
                         <tr>
-
-                            <td>
-                                {{ $loop->iteration }}
-                            </td>
 
                             <td>
                                 {{ $asociado->documento }}

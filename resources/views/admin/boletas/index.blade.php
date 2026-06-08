@@ -112,7 +112,6 @@
                     <table class="table align-middle">
                         <thead>
                         <tr>
-                            <th>ID</th>
                             <th>Número</th>
                             <th>Asociado</th>
                             <th>Documento</th>
@@ -124,9 +123,6 @@
                         <tbody>
                         @foreach($boletas as $boleta)
                             <tr>
-                                <td>
-                                    {{ $loop->iteration }}
-                                </td>
 
                                 @php
                                     $maxDigits = strlen((string) $boleta->sorteo->numero_fin);
@@ -177,7 +173,9 @@
                 <div class="text-center py-5">
                     <i class="bi bi-ticket-perforated fs-1 text-muted"></i>
                     <h5 class="mt-3 fw-bold">No hay boletas generadas</h5>
-                    <p class="text-muted">Genera boletas para comenzar.</p>
+                    <p class="text-muted">
+                        Aún no existen boletas asignadas para este sorteo.
+                    </p>
                 </div>
             @endif
         </div>
@@ -212,10 +210,10 @@
                             </select>
                         </div>
 
-                        <div class="alert alert-warning small">
-                            <strong>Importante:</strong> Al generar las boletas, el proceso es <b>irreversible</b>.
-                            Asegúrate de haber subido el archivo Excel completo antes de continuar.
-                            Una vez generadas y asignadas las boletas, el sistema no permitirá regenerarlas.
+                        <div class="alert alert-info small">
+                            <strong>Importante:</strong>
+                            Cada vez que generes boletas, el sistema asignará únicamente números que aún no hayan sido utilizados.
+                            Las boletas existentes no serán modificadas ni reemplazadas.
                         </div>
 
                         <!-- PROGRESO -->
@@ -253,7 +251,7 @@
             <div class="modal-content rounded-4 border-0 shadow">
 
                 <div class="modal-header">
-                    <h5 class="modal-title text-danger">Confirmación requerida</h5>
+                    <h5 class="modal-title text-danger">Confirmar generación</h5>
                     <button class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
 
@@ -263,17 +261,16 @@
                     </p>
 
                     <p class="text-muted">
-                        ⚠️ Este proceso es <b>irreversible</b>.<br>
-                        - No podrás volver a generar boletas para este sorteo.<br>
-                        - Asegúrate de haber cargado correctamente el archivo Excel completo.<br>
-                        - Una vez asignadas, el sistema no permitirá modificaciones.
+                        Se generarán nuevas boletas utilizando únicamente números disponibles.<br>
+                        Las boletas ya asignadas permanecerán intactas.<br>
+                        El sistema nunca reutilizará números marcados como usados.
                     </p>
                 </div>
 
                 <div class="modal-footer">
                     <button class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
                     <button class="btn btn-danger" id="btnConfirmarFinal">
-                        Sí, generar definitivamente
+                        Sí, generar boletas
                     </button>
                 </div>
 
