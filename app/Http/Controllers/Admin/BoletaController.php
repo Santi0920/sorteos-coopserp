@@ -6,6 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Models\Boleta;
 use App\Models\Sorteo;
 use Illuminate\Http\Request;
+use App\Mail\BoletasAsignadasMail;
+use Illuminate\Support\Facades\Mail;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class BoletaController extends Controller
 {
@@ -68,11 +71,55 @@ class BoletaController extends Controller
 
         $result = $service->generateForSorteo($sorteo);
 
-        if ($result['success']) {
-            return back()->with('success', $result['message']);
+        if (!$result['success']) {
+            return back()->with('error', $result['message']);
         }
 
-        return back()->with('error', $result['message']);
+        /*
+        ==========================================
+        ENVIAR CORREOS POR ASOCIADO (1 SOLO EMAIL)
+        ==========================================
+        */
+
+        foreach ($result['boletasPorAsociado'] as $asociadoId => $boletas) {
+
+            $asociado = $boletas->first()->asociado;
+            $sorteo = $boletas->first()->sorteo;
+
+            if (!$asociado || !$asociado->email) {
+                continue;
+            }
+
+            /*
+            ==========================================
+            GENERAR PDF MULTIPLE
+            ==========================================
+            */
+
+            $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.boletas-multiples', [
+                'boletas' => $boletas,
+                'asociado' => $asociado,
+                'premios' => $sorteo->premios ?? [],
+                'design' => $sorteo->design ?? null,
+            ])->output();
+
+            /*
+            ==========================================
+            ENVIAR EMAIL
+            ==========================================
+            */
+
+            \Illuminate\Support\Facades\Mail::to($asociado->email)->send(
+                new \App\Mail\BoletasAsignadasMail(
+                    $asociado,
+                    $boletas,
+                    $sorteo,
+                    $pdf
+                )
+            );
+        }
+
+        return back()->with('success', $result['message']);
     }
 
     public function destroyBySorteo(Sorteo $sorteo)

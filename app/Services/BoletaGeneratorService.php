@@ -21,7 +21,8 @@ class BoletaGeneratorService
             if ($asociados->isEmpty()) {
                 return [
                     'success' => false,
-                    'message' => 'No hay participantes'
+                    'message' => 'No hay participantes',
+                    'boletasPorAsociado' => collect()
                 ];
             }
 
@@ -66,27 +67,15 @@ class BoletaGeneratorService
                 }
             }
 
-            $totalDisponibles = DB::table('sorteo_numeros')
+            $boletasPorAsociado = Boleta::with(['asociado', 'sorteo'])
                 ->where('sorteo_id', $sorteo->id)
-                ->count();
-
-            $totalUsadas = DB::table('sorteo_numeros')
-                ->where('sorteo_id', $sorteo->id)
-                ->where('usado', true)
-                ->count();
-
-            $totalRestantes = DB::table('sorteo_numeros')
-                ->where('sorteo_id', $sorteo->id)
-                ->where('usado', false)
-                ->count();
+                ->get()
+                ->groupBy('asociado_id');
 
             return [
                 'success' => true,
-                'message' =>
-                    'Boletas generadas: ' . $creadas .
-                    ' | Usadas: ' . $totalUsadas .
-                    ' | Restantes: ' . $totalRestantes .
-                    ' | Total: ' . $totalDisponibles
+                'message' => 'Boletas generadas correctamente',
+                'boletasPorAsociado' => $boletasPorAsociado
             ];
         });
     }

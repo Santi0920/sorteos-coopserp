@@ -333,6 +333,88 @@
     </div>
 
 </div>
+
+
+<!-- LOADING GENERAR BOLETAS -->
+<div id="loadingBoletasOverlay">
+
+    <div class="loading-card">
+
+        <div class="loading-spinner"></div>
+
+        <h4>Generando boletas...</h4>
+
+        <p>
+            Estamos asignando números disponibles.
+            Por favor espera unos segundos.
+        </p>
+
+    </div>
+
+</div>
+
+<style>
+        #loadingBoletasOverlay{
+            display:none;
+            position:fixed;
+            inset:0;
+            background:rgba(0,0,0,.75);
+            z-index:999999;
+            align-items:center;
+            justify-content:center;
+            backdrop-filter:blur(4px);
+        }
+
+        .loading-card{
+            background:#fff;
+            padding:40px;
+            border-radius:20px;
+            text-align:center;
+            min-width:350px;
+            box-shadow:0 20px 50px rgba(0,0,0,.25);
+            animation:zoomIn .3s ease;
+        }
+
+        .loading-card h4{
+            margin-top:20px;
+            margin-bottom:10px;
+            font-weight:700;
+        }
+
+        .loading-card p{
+            color:#6c757d;
+            margin:0;
+        }
+
+        .loading-spinner{
+            width:80px;
+            height:80px;
+            border:8px solid #e9ecef;
+            border-top:8px solid #0d6efd;
+            border-radius:50%;
+            margin:auto;
+            animation:spin 1s linear infinite;
+        }
+
+        @keyframes spin{
+            100%{
+                transform:rotate(360deg);
+            }
+        }
+
+        @keyframes zoomIn{
+            from{
+                opacity:0;
+                transform:scale(.8);
+            }
+            to{
+                opacity:1;
+                transform:scale(1);
+            }
+        }
+</style>
+
+
 @endsection
 
 @push('scripts')
@@ -358,33 +440,22 @@
         });
 
         // confirmar final
+
+
         btnFinal.addEventListener('click', function () {
+
             modalConfirm.hide();
 
-            campos.classList.add('d-none');
-            footer.classList.add('d-none');
-            progreso.classList.remove('d-none');
-
-            texto.textContent = 'Calculando boletas...';
-            barra.style.width = '20%';
+            document.getElementById('loadingBoletasOverlay').style.display = 'flex';
 
             setTimeout(() => {
-                texto.textContent = 'Generando números únicos...';
-                barra.style.width = '45%';
-            }, 1200);
+                form.submit();
+            }, 300);
 
-            setTimeout(() => {
-                texto.textContent = 'Guardando en base de datos...';
-                barra.style.width = '70%';
-            }, 2500);
-
-            setTimeout(() => {
-                texto.textContent = 'Finalizando proceso...';
-                barra.style.width = '95%';
-            }, 4000);
-
-            form.submit();
         });
+
+
+
 
     });
 
