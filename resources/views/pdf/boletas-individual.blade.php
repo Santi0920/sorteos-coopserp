@@ -212,7 +212,7 @@
                         <div class="logo-box">
                                 <img
                                     class="footer-logo"
-                                    src="file://{{ public_path('storage/logos/Coopserp.png') }}"
+                                    src="{{ public_path('storage/logos/Coopserp.png') }}"
                                 >
                         </div>
                     </td>
@@ -221,7 +221,7 @@
                         <div class="logo-box">
                                 <img
                                     class="footer-logo"
-                                    src="file://{{ public_path('storage/logos/coljuegos.png') }}"
+                                    src="{{ public_path('storage/logos/coljuegos.png') }}"
                                 >
                         </div>
                     </td>

@@ -146,6 +146,20 @@
                                             <i class="bi bi-grid-3x3-gap"></i> Mapa
                                         </a>
 
+                                        <form action="{{ route('admin.sorteos.destroy', $sorteo->id) }}"
+                                            method="POST"
+                                            onsubmit="return confirm('¿Estás seguro de que deseas eliminar este sorteo? Esta acción no se puede deshacer.');"
+                                            class="d-inline">
+
+                                            @csrf
+                                            @method('DELETE')
+
+                                            <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                <i class="bi bi-trash"></i> Eliminar
+                                            </button>
+
+                                        </form>
+
                                     </div>
 
                                 </td>
