@@ -146,28 +146,43 @@ class ImportController extends Controller
             throw new \Exception("Fila {$fila}: Documento obligatorio");
         }
 
-        $asociado = Asociado::updateOrCreate(
-            [
+        $nuevasBoletas = intval($row[$map['boletas por persona']] ?? 1);
+
+        $asociado = Asociado::where('documento', $documento)->first();
+
+        if ($asociado) {
+
+            $asociado->update([
+                'nombres' => $row[$map['nombres']] ?? $asociado->nombres,
+                'apellidos' => $row[$map['apellidos']] ?? $asociado->apellidos,
+                'email' => $row[$map['email']] ?? $asociado->email,
+                'telefono' => $row[$map['telefono']] ?? $asociado->telefono,
+                'cuenta' => $row[$map['cuenta']] ?? $asociado->cuenta,
+                'agencia' => $row[$map['agencia']] ?? $asociado->agencia,
+                'nomina' => $row[$map['nomina']] ?? $asociado->nomina,
+                'coordinador' => $row[$map['coordinador']] ?? $asociado->coordinador,
+                'dependencia' => $row[$map['dependencia']] ?? $asociado->dependencia,
+
+                // SUMA LAS BOLETAS EXISTENTES
+                'boletas_por_persona' => $asociado->boletas_por_persona + $nuevasBoletas,
+            ]);
+
+        } else {
+
+            $asociado = Asociado::create([
                 'documento' => $documento,
-            ],
-            [
                 'nombres' => $row[$map['nombres']] ?? null,
                 'apellidos' => $row[$map['apellidos']] ?? null,
                 'email' => $row[$map['email']] ?? null,
                 'telefono' => $row[$map['telefono']] ?? null,
-
                 'cuenta' => $row[$map['cuenta']] ?? null,
-
-                'boletas_por_persona' =>
-                    intval($row[$map['boletas por persona']] ?? 1),
-
+                'boletas_por_persona' => $nuevasBoletas,
                 'agencia' => $row[$map['agencia']] ?? null,
                 'nomina' => $row[$map['nomina']] ?? null,
-
                 'coordinador' => $row[$map['coordinador']] ?? null,
                 'dependencia' => $row[$map['dependencia']] ?? null,
-            ]
-        );
+            ]);
+        }
 
         $sorteo->asociados()->syncWithoutDetaching([
             $asociado->id

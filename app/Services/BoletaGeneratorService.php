@@ -12,11 +12,7 @@ class BoletaGeneratorService
     {
         return DB::transaction(function () use ($sorteo) {
 
-            $asociados = $sorteo->asociados()
-                ->whereDoesntHave('boletas', function ($q) use ($sorteo) {
-                    $q->where('sorteo_id', $sorteo->id);
-                })
-                ->get();
+            $asociados = $sorteo->asociados()->get();
 
             if ($asociados->isEmpty()) {
                 return [
@@ -28,14 +24,24 @@ class BoletaGeneratorService
 
             $creadas = 0;
 
-            foreach ($asociados as $asociado) {
+            foreach ($sorteo->asociados as $asociado) {
 
-                $cantidadBoletas = max(
+                $cantidadDeseada = max(
                     1,
                     intval($asociado->boletas_por_persona ?? 1)
                 );
 
-                for ($i = 1; $i <= $cantidadBoletas; $i++) {
+                $cantidadActual = Boleta::where('sorteo_id', $sorteo->id)
+                    ->where('asociado_id', $asociado->id)
+                    ->count();
+
+                $faltantes = $cantidadDeseada - $cantidadActual;
+
+                if ($faltantes <= 0) {
+                    continue;
+                }
+
+                for ($i = 1; $i <= $faltantes; $i++) {
 
                     $numero = DB::table('sorteo_numeros')
                         ->where('sorteo_id', $sorteo->id)
@@ -53,7 +59,7 @@ class BoletaGeneratorService
                         'asociado_id' => $asociado->id,
                         'numero_boleta' => $numero->numero,
                         'monto_base' => 0,
-                        'bloque_boletas' => $cantidadBoletas,
+                        'bloque_boletas' => $cantidadDeseada,
                         'ganadora' => false
                     ]);
 
