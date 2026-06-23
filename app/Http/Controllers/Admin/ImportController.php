@@ -103,7 +103,7 @@ class ImportController extends Controller
             DB::commit();
 
             return redirect()
-                ->route('admin.sorteos.index')
+                ->route('admin.sorteos.import.form', $sorteo)
                 ->with('success', "Importación finalizada: $success OK, $failed errores")
                 ->with('import_errors', $errors);
 

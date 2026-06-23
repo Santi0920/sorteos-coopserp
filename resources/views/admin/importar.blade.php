@@ -26,7 +26,52 @@
             <div class="card border-0 shadow rounded-4">
 
                 <div class="card-body p-4">
+                    @if ($errors->any())
+                        <div class="alert alert-danger rounded-4">
+                            <h6 class="fw-bold mb-2">Errores de validación</h6>
+                            <ul class="mb-0">
+                                @foreach ($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @endif
 
+                    @if (session('error'))
+                        <div class="alert alert-danger rounded-4">
+                            <h6 class="fw-bold mb-2">Error general</h6>
+                            <div>{{ session('error') }}</div>
+                        </div>
+                    @endif
+
+
+
+                    @if (session('import_errors') && count(session('import_errors')))
+                        <div class="alert alert-warning rounded-4">
+                            <h6 class="fw-bold mb-2">
+                                Filas con error: {{ count(session('import_errors')) }}
+                            </h6>
+
+                            <div style="max-height: 300px; overflow-y: auto;">
+                                <table class="table table-sm table-bordered mb-0 bg-white">
+                                    <thead>
+                                        <tr>
+                                            <th>Fila</th>
+                                            <th>Error</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (session('import_errors') as $error)
+                                            <tr>
+                                                <td>{{ $error['row'] ?? '—' }}</td>
+                                                <td>{{ $error['error'] ?? 'Error desconocido' }}</td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    @endif
                     <h4 class="fw-bold mb-2">
                         📥 Importación de asociados
                     </h4>

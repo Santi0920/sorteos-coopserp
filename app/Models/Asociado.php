@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Support\Str;
 
 class Asociado extends Model
 {
@@ -28,6 +29,24 @@ class Asociado extends Model
         'dependencia',
         'consentimiento_datos_at'
     ];
+
+    protected static function booted(): void
+    {
+        static::saving(function (Asociado $asociado) {
+            if (blank($asociado->token_consulta)) {
+                $asociado->token_consulta = self::generarTokenConsultaUnico();
+            }
+        });
+    }
+
+    public static function generarTokenConsultaUnico(): string
+    {
+        do {
+            $token = Str::random(64);
+        } while (self::where('token_consulta', $token)->exists());
+
+        return $token;
+    }
 
     protected $casts = [
         'activo' => 'boolean',
