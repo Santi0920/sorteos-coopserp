@@ -74,6 +74,18 @@ class Asociado extends Model
             'sorteo_asociado',
             'asociado_id',
             'sorteo_id'
-        )->withTimestamps();
+        )
+        ->withPivot([
+            'boletas_por_persona',
+            'email',
+            'telefono',
+            'whatsapp',
+            'cuenta',
+            'agencia',
+            'nomina',
+            'coordinador',
+            'dependencia',
+        ])
+        ->withTimestamps();
     }
 }

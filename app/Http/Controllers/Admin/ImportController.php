@@ -140,53 +140,66 @@ class ImportController extends Controller
 
     private function processRow($row, $map, $sorteo, $fila)
     {
-        $documento = trim($row[$map['documento']] ?? '');
+        $documento = trim($this->cell($row, $map, 'documento'));
 
         if (!$documento) {
             throw new \Exception("Fila {$fila}: Documento obligatorio");
         }
 
-        $nuevasBoletas = intval($row[$map['boletas por persona']] ?? 1);
+        $boletasPorPersona = (int) $this->cell($row, $map, 'boletas por persona', 1);
 
-        $asociado = Asociado::where('documento', $documento)->first();
-
-        if ($asociado) {
-
-            $asociado->update([
-                'nombres' => $row[$map['nombres']] ?? $asociado->nombres,
-                'apellidos' => $row[$map['apellidos']] ?? $asociado->apellidos,
-                'email' => $row[$map['email']] ?? $asociado->email,
-                'telefono' => $row[$map['telefono']] ?? $asociado->telefono,
-                'cuenta' => $row[$map['cuenta']] ?? $asociado->cuenta,
-                'agencia' => $row[$map['agencia']] ?? $asociado->agencia,
-                'nomina' => $row[$map['nomina']] ?? $asociado->nomina,
-                'coordinador' => $row[$map['coordinador']] ?? $asociado->coordinador,
-                'dependencia' => $row[$map['dependencia']] ?? $asociado->dependencia,
-
-                // SUMA LAS BOLETAS EXISTENTES
-                'boletas_por_persona' => $asociado->boletas_por_persona + $nuevasBoletas,
-            ]);
-
-        } else {
-
-            $asociado = Asociado::create([
-                'documento' => $documento,
-                'nombres' => $row[$map['nombres']] ?? null,
-                'apellidos' => $row[$map['apellidos']] ?? null,
-                'email' => $row[$map['email']] ?? null,
-                'telefono' => $row[$map['telefono']] ?? null,
-                'cuenta' => $row[$map['cuenta']] ?? null,
-                'boletas_por_persona' => $nuevasBoletas,
-                'agencia' => $row[$map['agencia']] ?? null,
-                'nomina' => $row[$map['nomina']] ?? null,
-                'coordinador' => $row[$map['coordinador']] ?? null,
-                'dependencia' => $row[$map['dependencia']] ?? null,
-            ]);
+        if ($boletasPorPersona < 1) {
+            $boletasPorPersona = 1;
         }
 
-        $sorteo->asociados()->syncWithoutDetaching([
-            $asociado->id
-        ]);
+        // Datos globales del asociado
+        $asociado = Asociado::updateOrCreate(
+            [
+                'documento' => $documento,
+            ],
+            [
+                'nombres' => $this->cell($row, $map, 'nombres'),
+                'apellidos' => $this->cell($row, $map, 'apellidos'),
+            ]
+        );
+
+        // Datos específicos de este sorteo
+        $pivotData = [
+            'boletas_por_persona' => $boletasPorPersona,
+            'email' => $this->cell($row, $map, 'email'),
+            'telefono' => $this->cell($row, $map, 'telefono'),
+            'whatsapp' => $this->cell($row, $map, 'whatsapp'),
+            'cuenta' => $this->cell($row, $map, 'cuenta'),
+            'agencia' => $this->cell($row, $map, 'agencia'),
+            'nomina' => $this->cell($row, $map, 'nomina'),
+            'coordinador' => $this->cell($row, $map, 'coordinador'),
+            'dependencia' => $this->cell($row, $map, 'dependencia'),
+        ];
+
+        $yaExisteEnSorteo = $sorteo->asociados()
+            ->where('asociados.id', $asociado->id)
+            ->exists();
+
+        if ($yaExisteEnSorteo) {
+            $sorteo->asociados()->updateExistingPivot($asociado->id, $pivotData);
+        } else {
+            $sorteo->asociados()->attach($asociado->id, $pivotData);
+        }
+    }
+
+    private function cell($row, $map, string $column, $default = null)
+    {
+        if (!isset($map[$column])) {
+            return $default;
+        }
+
+        $value = $row[$map[$column]] ?? $default;
+
+        if (is_string($value)) {
+            $value = trim($value);
+        }
+
+        return $value === '' ? $default : $value;
     }
 
     public function template()

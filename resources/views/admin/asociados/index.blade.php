@@ -161,27 +161,27 @@
                             </td>
 
                             <td>
-                                {{ $asociado->email ?: '—' }}
+                                {{ $asociado->pivot->email ?: '—' }}
                             </td>
 
                             <td>
-                                {{ $asociado->agencia ?: '—' }}
+                                {{ $asociado->pivot->agencia ?: '—' }}
                             </td>
 
                             <td>
-                                {{ $asociado->cuenta ?: '—' }}
+                                {{ $asociado->pivot->cuenta ?: '—' }}
                             </td>
 
                            <td class="fw-bold">
-                                {{ $asociado->boletas_por_persona ?: '—' }}
+                                {{ $asociado->pivot->boletas_por_persona ?: '—' }}
                             </td>
 
                             <td>
-                                {{ $asociado->nomina ?: '—' }}
+                                {{ $asociado->pivot->nomina ?: '—' }}
                             </td>
 
                             <td>
-                                {{ $asociado->coordinador ?: '—' }}
+                                {{ $asociado->pivot->coordinador ?: '—' }}
 
                             <td>
 

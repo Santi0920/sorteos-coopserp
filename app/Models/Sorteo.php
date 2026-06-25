@@ -75,12 +75,24 @@ class Sorteo extends Model
 
     public function asociados()
     {
-        return $this
-            ->belongsToMany(
-                Asociado::class,
-                'sorteo_asociado'
-            )
-            ->withTimestamps();
+        return $this->belongsToMany(
+            Asociado::class,
+            'sorteo_asociado',
+            'sorteo_id',
+            'asociado_id'
+        )
+        ->withPivot([
+            'boletas_por_persona',
+            'email',
+            'telefono',
+            'whatsapp',
+            'cuenta',
+            'agencia',
+            'nomina',
+            'coordinador',
+            'dependencia',
+        ])
+        ->withTimestamps();
     }
 
     public function design()

@@ -12,23 +12,38 @@ class BoletaGeneratorService
     {
         return DB::transaction(function () use ($sorteo) {
 
+            /*
+            |--------------------------------------------------------------------------
+            | Traemos los asociados desde el sorteo
+            |--------------------------------------------------------------------------
+            | Importante: así Laravel carga la información de la tabla pivote:
+            | sorteo_asociado.boletas_por_persona
+            */
             $asociados = $sorteo->asociados()->get();
 
             if ($asociados->isEmpty()) {
                 return [
                     'success' => false,
-                    'message' => 'No hay participantes',
-                    'boletasPorAsociado' => collect()
+                    'message' => 'No hay participantes vinculados a este sorteo.',
+                    'creadas' => 0,
+                    'boletasPorAsociado' => collect(),
                 ];
             }
 
             $creadas = 0;
+            $sinNumeros = false;
 
-            foreach ($sorteo->asociados as $asociado) {
+            foreach ($asociados as $asociado) {
 
+                /*
+                |--------------------------------------------------------------------------
+                | La cantidad de boletas ya NO sale de asociados
+                |--------------------------------------------------------------------------
+                | Ahora sale de sorteo_asociado.
+                */
                 $cantidadDeseada = max(
                     1,
-                    intval($asociado->boletas_por_persona ?? 1)
+                    (int) ($asociado->pivot->boletas_por_persona ?? 1)
                 );
 
                 $cantidadActual = Boleta::where('sorteo_id', $sorteo->id)
@@ -46,11 +61,12 @@ class BoletaGeneratorService
                     $numero = DB::table('sorteo_numeros')
                         ->where('sorteo_id', $sorteo->id)
                         ->where('usado', false)
-                        ->inRandomOrder()
                         ->lockForUpdate()
+                        ->inRandomOrder()
                         ->first();
 
                     if (!$numero) {
+                        $sinNumeros = true;
                         break 2;
                     }
 
@@ -60,28 +76,59 @@ class BoletaGeneratorService
                         'numero_boleta' => $numero->numero,
                         'monto_base' => 0,
                         'bloque_boletas' => $cantidadDeseada,
-                        'ganadora' => false
+                        'ganadora' => false,
                     ]);
 
                     DB::table('sorteo_numeros')
                         ->where('id', $numero->id)
                         ->update([
-                            'usado' => true
+                            'usado' => true,
+                            'updated_at' => now(),
                         ]);
 
                     $creadas++;
                 }
             }
 
+            /*
+            |--------------------------------------------------------------------------
+            | Agrupar boletas generadas por asociado
+            |--------------------------------------------------------------------------
+            */
             $boletasPorAsociado = Boleta::with(['asociado', 'sorteo'])
                 ->where('sorteo_id', $sorteo->id)
+                ->orderBy('asociado_id')
+                ->orderBy('numero_boleta')
                 ->get()
                 ->groupBy('asociado_id');
 
+            /*
+            |--------------------------------------------------------------------------
+            | Marcar sorteo como generado
+            |--------------------------------------------------------------------------
+            */
+            if ($creadas > 0) {
+                $sorteo->update([
+                    'boletas_generadas' => true,
+                ]);
+            }
+
+            if ($sinNumeros) {
+                return [
+                    'success' => false,
+                    'message' => "Se generaron {$creadas} boletas, pero se agotaron los números disponibles.",
+                    'creadas' => $creadas,
+                    'boletasPorAsociado' => $boletasPorAsociado,
+                ];
+            }
+
             return [
                 'success' => true,
-                'message' => 'Boletas generadas correctamente',
-                'boletasPorAsociado' => $boletasPorAsociado
+                'message' => $creadas > 0
+                    ? "Boletas generadas correctamente. Nuevas boletas creadas: {$creadas}."
+                    : 'No había boletas pendientes por generar.',
+                'creadas' => $creadas,
+                'boletasPorAsociado' => $boletasPorAsociado,
             ];
         });
     }
