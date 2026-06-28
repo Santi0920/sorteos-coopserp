@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Asociado;
 use App\Models\Boleta;
 use App\Models\Premio;
+use App\Models\Sorteo;
 use Barryvdh\DomPDF\Facade\Pdf;
 
 class PdfBoletaController extends Controller
@@ -14,12 +15,12 @@ class PdfBoletaController extends Controller
     {
         $boleta->load([
             'asociado',
-            'sorteo.design'
+            'sorteo.design',
         ]);
 
         return $this->buildPdfAll(
             $boleta->asociado,
-            $boleta->id // 👈 clave: enviar boleta específica
+            $boleta->id
         );
     }
 
@@ -34,17 +35,16 @@ class PdfBoletaController extends Controller
 
     protected function buildPdfAll(
         Asociado $asociado,
-        ?int $boletaId = null // 👈 nuevo parámetro opcional
+        ?int $boletaId = null
     ) {
-
         $query = Boleta::with([
                 'sorteo',
-                'sorteo.design'
+                'sorteo.design',
             ])
             ->where('asociado_id', $asociado->id)
+            ->orderBy('sorteo_id')
             ->orderBy('numero_boleta');
 
-        // 👇 SI VIENE UNA BOLETA ESPECÍFICA, SOLO ESA
         if ($boletaId) {
             $query->where('id', $boletaId);
         }
@@ -58,14 +58,38 @@ class PdfBoletaController extends Controller
             );
         }
 
-        // 🔥 IMPORTANTE:
-        // Si es una sola boleta, usamos SU sorteo
+   
+        $sorteoIds = $boletas
+            ->pluck('sorteo_id')
+            ->unique()
+            ->values();
+
+    
+        $participacionesPorSorteo = collect();
+
+        $sorteos = Sorteo::whereIn('id', $sorteoIds)->get();
+
+        foreach ($sorteos as $sorteo) {
+            $participacion = $sorteo->asociados()
+                ->where('asociados.id', $asociado->id)
+                ->first();
+
+            if ($participacion) {
+                $participacionesPorSorteo->put($sorteo->id, $participacion);
+            }
+        }
+
+
+        $premiosPorSorteo = Premio::where('activo', true)
+            ->whereIn('sorteo_id', $sorteoIds)
+            ->orderBy('orden')
+            ->get()
+            ->groupBy('sorteo_id');
+
+
         $primerSorteo = $boletas->first()->sorteo;
 
-        $premios = Premio::where('activo', true)
-            ->where('sorteo_id', $primerSorteo->id)
-            ->orderBy('orden')
-            ->get();
+        $premios = $premiosPorSorteo->get($primerSorteo->id, collect());
 
         $design = $primerSorteo->design;
 
@@ -75,7 +99,9 @@ class PdfBoletaController extends Controller
                 'asociado' => $asociado,
                 'boletas' => $boletas,
                 'premios' => $premios,
-                'design' => $design
+                'premiosPorSorteo' => $premiosPorSorteo,
+                'design' => $design,
+                'participacionesPorSorteo' => $participacionesPorSorteo,
             ]
         );
 

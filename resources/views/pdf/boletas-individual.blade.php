@@ -5,16 +5,6 @@
     <meta charset="utf-8">
 
     <style>
-        .boleta-numero {
-            font-size: 16px;
-            font-weight: bold;
-        }
-
-        .numero-grande {
-            font-size: 20px;
-            font-weight: 900;
-
-        }
         @page {
             margin: 25px;
         }
@@ -39,9 +29,14 @@
             padding: 25px;
         }
 
-        .line {
-            border-top: 2px solid black;
-            margin-bottom: 20px;
+        .boleta-numero {
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .numero-grande {
+            font-size: 20px;
+            font-weight: 900;
         }
 
         .right {
@@ -60,13 +55,19 @@
         .subtitle {
             font-size: 18px;
             font-weight: bold;
+            margin-top: 20px;
+            margin-bottom: 8px;
         }
 
-
+        .section {
+            margin-top: 8px;
+            margin-bottom: 12px;
+        }
 
         .section-title {
             font-size: 18px;
             font-weight: bold;
+            margin-top: 28px;
         }
 
         ul {
@@ -80,7 +81,7 @@
         }
 
         .footer {
-            margin-top: 40px;
+            margin-top: 80px;
         }
 
         .logo-box {
@@ -94,6 +95,10 @@
             max-height: 55px;
             vertical-align: middle;
         }
+
+        .top-info {
+            line-height: 2;
+        }
     </style>
 </head>
 
@@ -103,6 +108,20 @@
 
     @php
         $sorteo = $boleta->sorteo;
+
+    
+        $participacion = ($participacionesPorSorteo ?? collect())->get($sorteo->id);
+
+        $cuenta = data_get($participacion, 'pivot.cuenta') ?: '';
+        $agencia = data_get($participacion, 'pivot.agencia') ?: '';
+
+     
+        $premiosActuales = isset($premiosPorSorteo)
+            ? $premiosPorSorteo->get($sorteo->id, collect())
+            : ($premios ?? collect());
+
+    
+        $designActual = $sorteo->design ?? ($design ?? null);
 
         $maxDigits = strlen((string) $sorteo->numero_fin);
 
@@ -120,7 +139,7 @@
 
             <table width="100%">
                 <tr>
-                    <td width="50%" class="right">
+                    <td width="100%" class="right">
 
                         <div class="boleta-numero">
                             Boleta No.
@@ -129,52 +148,68 @@
 
                         <br>
 
-                        Fecha Emisión:
-                        <span class="red">{{ $boleta->created_at->format('d-M-Y') }}</span>
+                        <div class="top-info">
+                            Fecha Emisión:
+                            <span class="red">
+                                {{ optional($boleta->created_at)->format('d-M-Y') }}
+                            </span>
 
-                        Nombre:
-                        <span class="red">{{ $asociado->nombres }} {{ $asociado->apellidos }}</span>
+                            Nombre:
+                            <span class="red">
+                                {{ $asociado->nombres }} {{ $asociado->apellidos }}
+                            </span>
 
-                        Cédula:
-                        <span class="red">{{ $asociado->documento }}</span>
+                            Cédula:
+                            <span class="red">
+                                {{ $asociado->documento }}
+                            </span>
 
-                        Cuenta:
-                        <span class="red">{{ $asociado->cuenta }}</span>
-<br>
-                        Agencia:
-                        <span class="red">{{ $asociado->agencia }}</span>
+                            Cuenta:
+                            <span class="red">
+                                {{ $cuenta }}
+                            </span>
 
-                        Hora:
-                        <span class="red">{{ $boleta->created_at->format('H:i:s') }}</span>
-                        
 
+
+                            Agencia:
+                            <span class="red">
+                                {{ $agencia }}
+                            </span>
+
+                            Hora:
+                            <span class="red">
+                                {{ optional($boleta->created_at)->format('H:i:s') }}
+                            </span>
+                        </div>
 
                     </td>
                 </tr>
             </table>
 
-            <div class="center subtitle">
-                {{ $design?->subtitulo }}
-            </div>
+            @if($designActual?->subtitulo)
+                <div class="center subtitle">
+                    {{ $designActual->subtitulo }}
+                </div>
+            @endif
 
-            <div class="center section">
-                {{ $design?->descripcion }}
-            </div>
+            @if($designActual?->descripcion)
+                <div class="center section">
+                    {{ $designActual->descripcion }}
+                </div>
+            @endif
 
-
-
-            <ul>
-                @foreach($premios as $index => $premio)
-                    <li>
-                        <b>
-                            Sorteo:
-                        </b>
-                        {{ $sorteo->fecha_sorteo->format('d-M-Y') }}
-                        /
-                        {{ $premio->titulo }}
-                    </li>
-                @endforeach
-            </ul>
+            @if($premiosActuales->count())
+                <ul>
+                    @foreach($premiosActuales as $premio)
+                        <li>
+                            <b>Sorteo:</b>
+                            {{ optional($sorteo->fecha_sorteo)->format('d-M-Y') }}
+                            /
+                            {{ $premio->titulo }}
+                        </li>
+                    @endforeach
+                </ul>
+            @endif
 
             <div class="section section-title">
                 DESCRIPCIÓN DE LA ACTIVIDAD
@@ -182,9 +217,9 @@
 
             <ul>
 
-                @if($design?->terminos)
+                @if($designActual?->terminos)
                     <li>
-                        {!! nl2br(e($design->terminos)) !!}
+                        {!! nl2br(e($designActual->terminos)) !!}
                     </li>
                 @endif
 
@@ -193,36 +228,38 @@
                     no podrá venderse, cederse, permutarse ni endosarse.
                 </li>
 
-                @if($design?->url_consulta_ganador)
+                @if($designActual?->url_consulta_ganador)
                     <li>
                         Consulta ganador:
-                        {{ $design->url_consulta_ganador }}
+                        {{ $designActual->url_consulta_ganador }}
                     </li>
                 @endif
 
             </ul>
 
-            <div class="center footer red">
-                {{ $design?->texto_coljuegos }}
-            </div>
+            @if($designActual?->texto_coljuegos)
+                <div class="center footer red">
+                    {{ $designActual->texto_coljuegos }}
+                </div>
+            @endif
 
             <table width="100%" class="footer">
                 <tr>
-                    <td>
+                    <td width="50%">
                         <div class="logo-box">
-                                <img
-                                    class="footer-logo"
-                                    src="{{ public_path('storage/logos/Coopserp.png') }}"
-                                >
+                            <img
+                                class="footer-logo"
+                                src="{{ public_path('storage/logos/Coopserp.png') }}"
+                            >
                         </div>
                     </td>
 
-                    <td>
+                    <td width="50%">
                         <div class="logo-box">
-                                <img
-                                    class="footer-logo"
-                                    src="{{ public_path('storage/logos/coljuegos.png') }}"
-                                >
+                            <img
+                                class="footer-logo"
+                                src="{{ public_path('storage/logos/coljuegos.png') }}"
+                            >
                         </div>
                     </td>
                 </tr>

@@ -12,13 +12,7 @@ class BoletaGeneratorService
     {
         return DB::transaction(function () use ($sorteo) {
 
-            /*
-            |--------------------------------------------------------------------------
-            | Traemos los asociados desde el sorteo
-            |--------------------------------------------------------------------------
-            | Importante: así Laravel carga la información de la tabla pivote:
-            | sorteo_asociado.boletas_por_persona
-            */
+
             $asociados = $sorteo->asociados()->get();
 
             if ($asociados->isEmpty()) {
@@ -102,11 +96,7 @@ class BoletaGeneratorService
                 ->get()
                 ->groupBy('asociado_id');
 
-            /*
-            |--------------------------------------------------------------------------
-            | Marcar sorteo como generado
-            |--------------------------------------------------------------------------
-            */
+
             if ($creadas > 0) {
                 $sorteo->update([
                     'boletas_generadas' => true,
